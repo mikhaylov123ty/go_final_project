@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
+	"finalProject/internal/webServer"
 )
 
 func main() {
-	fmt.Println("Hello World")
+	newServer := webServer.Init(os.Getenv("webServerPort"))
+	newServer.Start("web/")
 }
