@@ -11,13 +11,16 @@ type server struct {
 
 func Init(port string) *server {
 	return &server{
-		port: port}
+		port: port,
+	}
 }
 
-func (s *server) Start(webDir string) {
+func (s *server) Start(webDir string) error {
+	log.Println("Starting server...")
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
 	err := http.ListenAndServe(":"+s.port, nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
