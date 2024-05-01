@@ -92,7 +92,6 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 	}
 
 	r := &repeater{modifier: repeatStr[0], value: repeatVal, now: now}
-	fmt.Println(date)
 	r.date, err = time.Parse("20060102", date)
 	if err != nil {
 		return nil, err
@@ -102,17 +101,13 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 }
 
 func (r *repeater) moveDays() {
-	count := 0
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(0, 0, r.value[0][0])
-		count++
 	} else {
 		for r.date.Before(r.now) {
 			r.date = r.date.AddDate(0, 0, r.value[0][0])
-			count++
 		}
 	}
-	fmt.Println("COUNTER DAYS:", count)
 }
 
 func (r *repeater) moveYears() {
@@ -131,7 +126,6 @@ func (r *repeater) moveYears() {
 
 func (r *repeater) moveWeeks() {
 	var weekDays string
-	count := 0
 	for _, weekDay := range r.value[0] {
 		if weekDay == 7 {
 			weekDay = 0
@@ -141,19 +135,15 @@ func (r *repeater) moveWeeks() {
 	if r.date.Before(r.now) {
 		r.date = r.now
 		r.now = r.now.AddDate(0, 0, 1)
-		count++
 	}
 
 	for r.date.Before(r.now) || !(strings.Contains(weekDays, r.date.Weekday().String())) {
 		r.date = r.date.AddDate(0, 0, 1)
-		count++
 	}
-	fmt.Println("COUNTER WEEKS:", count)
 }
 
 func (r *repeater) moveMonths() {
 	dates := make([]time.Time, 0)
-	count := 0
 	if r.date.Before(r.now) {
 		r.date = r.now
 	}
@@ -173,15 +163,11 @@ func (r *repeater) moveMonths() {
 	for len(dates) > 0 {
 		if r.date.Before(dates[0]) {
 			r.date = dates[0]
-			count++
-			fmt.Println("COUNTER MONTHS:", count)
 			return
 		} else {
 			newDate := dates[0].AddDate(1, 0, 0)
 			dates = dates[1:]
 			dates = append(dates, newDate)
-			count++
 		}
 	}
-	fmt.Println("COUNTER MONTHS:", count)
 }
