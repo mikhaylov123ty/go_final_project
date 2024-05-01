@@ -1,6 +1,7 @@
 package webServer
 
 import (
+	"finalProject/internal/api"
 	"log"
 	"net/http"
 )
@@ -17,10 +18,15 @@ func Init(port string) *server {
 
 func (s *server) Start(webDir string) error {
 	log.Println("Starting server...")
+
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
+
+	http.HandleFunc("/api/", api.MainHandler)
+
 	err := http.ListenAndServe(":"+s.port, nil)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

@@ -22,8 +22,6 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(r)
-
 	switch r.modifier {
 	case "d":
 		r.moveDays()
@@ -37,11 +35,12 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", errors.New("invalid repeat symbol")
 	}
 
-	return r.date.String(), nil
+	return r.date.Format("20060102"), nil
 }
 
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
 	var repeatVal [2][]int
+	var negativeVal []int
 	var err error
 
 	repeatStr := strings.Split(repeat, " ")
@@ -50,37 +49,50 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 			repeatStrVal := strings.Split(repeatStr[i], ",")
 			for _, v := range repeatStrVal {
 				val, err := strconv.Atoi(v)
+
 				if err != nil {
 					return nil, err
+				}
+				if repeatStr[0] == "d" && val > 400 {
+					return nil, errors.New("invalid repeat value")
+				}
+				if repeatStr[0] == "m" && val <= -3 || val > 31 {
+					return nil, errors.New("invalid repeat value")
+				}
+				if repeatStr[0] == "w" && val > 7 {
+					return nil, errors.New("invalid repeat value")
+				}
+				if val < 0 {
+					negativeVal = append(negativeVal, val)
+					continue
 				}
 				repeatVal[i-1] = append(repeatVal[i-1], val)
 			}
 		}
+
+		for _, v := range repeatVal {
+			sort.Ints(v)
+		}
+		sort.Ints(negativeVal)
+
+		repeatVal[0] = append(repeatVal[0], negativeVal...)
 	} else if repeatStr[0] == "y" {
 		repeatVal[0] = append(repeatVal[0], 1)
 	} else {
 		return nil, errors.New("invalid repeat value")
 	}
 
-	if repeatVal[0][0] > 400 {
-		return nil, errors.New("invalid repeat value")
-	}
-
-	if repeatVal[0][0] <= -3 {
-		return nil, errors.New("invalid repeat value")
-	}
-
-	if len(repeatVal[1]) == 0 {
+	if len(repeatVal[1]) == 0 && repeatStr[0] == "m" {
+		if repeatVal[0][0] == 31 {
+			repeatVal[1] = append(repeatVal[1], 1, 3, 5, 7, 8, 10, 12)
+		}
 		for i := 1; i <= 12; i++ {
 			repeatVal[1] = append(repeatVal[1], i)
 		}
 	}
 
-	for _, v := range repeatVal {
-		sort.Ints(v)
-	}
-
 	r := &repeater{modifier: repeatStr[0], value: repeatVal, now: now}
+	fmt.Println(date)
 	r.date, err = time.Parse("20060102", date)
 	if err != nil {
 		return nil, err
@@ -90,31 +102,58 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 }
 
 func (r *repeater) moveDays() {
-	for r.date.Before(r.now) {
+	count := 0
+	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(0, 0, r.value[0][0])
+		count++
+	} else {
+		for r.date.Before(r.now) {
+			r.date = r.date.AddDate(0, 0, r.value[0][0])
+			count++
+		}
 	}
+	fmt.Println("COUNTER DAYS:", count)
 }
 
 func (r *repeater) moveYears() {
-	for r.date.Before(r.now) {
+	count := 0
+	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(r.value[0][0], 0, 0)
+		count++
+	} else {
+		for r.date.Before(r.now) {
+			r.date = r.date.AddDate(r.value[0][0], 0, 0)
+			count++
+		}
 	}
+	fmt.Println("COUNTER YEARS:", count)
 }
 
 func (r *repeater) moveWeeks() {
 	var weekDays string
+	count := 0
 	for _, weekDay := range r.value[0] {
+		if weekDay == 7 {
+			weekDay = 0
+		}
 		weekDays += time.Weekday(weekDay).String()
+	}
+	if r.date.Before(r.now) {
+		r.date = r.now
+		r.now = r.now.AddDate(0, 0, 1)
+		count++
 	}
 
 	for r.date.Before(r.now) || !(strings.Contains(weekDays, r.date.Weekday().String())) {
 		r.date = r.date.AddDate(0, 0, 1)
+		count++
 	}
+	fmt.Println("COUNTER WEEKS:", count)
 }
 
 func (r *repeater) moveMonths() {
 	dates := make([]time.Time, 0)
-
+	count := 0
 	if r.date.Before(r.now) {
 		r.date = r.now
 	}
@@ -124,6 +163,7 @@ func (r *repeater) moveMonths() {
 			m := month
 			if day < 0 {
 				m++
+				day++
 			}
 			parseTime := time.Date(r.now.Year(), time.Month(m), day, 0, 0, 0, 0, time.UTC)
 			dates = append(dates, parseTime)
@@ -133,12 +173,15 @@ func (r *repeater) moveMonths() {
 	for len(dates) > 0 {
 		if r.date.Before(dates[0]) {
 			r.date = dates[0]
-			fmt.Println("ANSWER:", r.date)
+			count++
+			fmt.Println("COUNTER MONTHS:", count)
 			return
 		} else {
 			newDate := dates[0].AddDate(1, 0, 0)
 			dates = dates[1:]
 			dates = append(dates, newDate)
+			count++
 		}
 	}
+	fmt.Println("COUNTER MONTHS:", count)
 }
