@@ -1,4 +1,4 @@
-package webServer
+package web
 
 import (
 	"finalProject/internal/api"

@@ -1,4 +1,4 @@
-package dataBase
+package db
 
 import (
 	"database/sql"
@@ -8,11 +8,13 @@ import (
 	"os"
 )
 
-type dataBase struct {
-	DB *sql.DB
+type dbInstance struct {
+	Connection *sql.DB
 }
 
-func Init(file string) (*dataBase, error) {
+var DbInstance *dbInstance
+
+func Init(file string) (*dbInstance, error) {
 	log.Println("Initializing database")
 	db, err := sql.Open("sqlite", file)
 	if err != nil {
@@ -43,7 +45,9 @@ func Init(file string) (*dataBase, error) {
 		return nil, err
 	}
 
-	return &dataBase{DB: db}, nil
+	DbInstance = &dbInstance{Connection: db}
+
+	return DbInstance, nil
 }
 
 func checkFile() bool {

@@ -1,4 +1,4 @@
-package dataBase
+package db
 
 type scheduler struct {
 	id      int
