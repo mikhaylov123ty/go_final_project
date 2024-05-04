@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type response struct {
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		addTask(w, r)
+		w.Write(addTask(w, r))
 		//default:
 		//	getTaskHandler(w, r)
 	}
@@ -75,62 +76,51 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func addTask(w http.ResponseWriter, r *http.Request) {
+func addTask(w http.ResponseWriter, r *http.Request) []byte {
 
 	newTask := &db.Task{}
-	resp := response{}
+	//resp := response{}
 
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
 
 		log.Println("{\"error\":\"ошибка десериализации JSON\"}", err.Error())
-		w.Write([]byte("{\"error\":\"ошибка десериализации JSON\"}"))
-		return
-	}
+		return []byte("{\"error\":\"ошибка десериализации JSON\"}")
 
-	if newTask.Title == "" {
-		log.Println("{\"error\":\"Не указан заголовок задачи\"}")
-		w.Write([]byte("{\"error\":\"Не указан заголовок задачи\"}"))
-		return
 	}
 
 	if newTask.Date == "" {
 		newTask.Date = time.Now().Format("20060102")
 	}
 
+	if newTask.Title == "" {
+		log.Println("{\"error\":\"Не указан заголовок задачи\"}")
+		return []byte("{\"error\":\"Не указан заголовок задачи\"}")
+	}
+
 	taskDate, err := time.Parse("20060102", newTask.Date)
 	if err != nil {
 		log.Println("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}", err.Error())
-		w.Write([]byte("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}"))
-		return
+		return []byte("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}")
 	}
 
-	//TODO think about today case
-	if taskDate.Before(time.Now()) || taskDate.Format("20060102") != time.Now().Format("20060102") {
+	if taskDate.Before(time.Now().UTC().Round(24*time.Hour).AddDate(0, 0, -1)) {
 		if newTask.Repeat != "" {
 			newTask.Date, err = tasks.NextDate(time.Now(), newTask.Date, newTask.Repeat)
 			if err != nil {
 				log.Println("{\"error\":\"" + err.Error() + "}")
-				w.Write([]byte("{\"error\":\"" + err.Error() + "\"}"))
-				return
+				return []byte("{\"error\":\"" + err.Error() + "\"}")
 			}
 		} else {
 			newTask.Date = time.Now().Format("20060102")
 		}
 	}
 
-	resp.Id, resp.Error = db.DbInstance.AddTask(newTask)
-
-	json, err := json.Marshal(resp)
+	id, err := db.DbInstance.AddTask(newTask)
 	if err != nil {
-		fmt.Println("Error marshall", err)
-		return
+		log.Println(err)
 	}
-	fmt.Println("RESPO", resp)
-	fmt.Println("JSON", string(json))
-	w.Write(json)
-}
+	strID := strconv.Itoa(id)
 
-//func (r *response) constructResponse() []byte {
-//
-//}
+	return []byte("{\"id\":\"" + strID + "\"}")
+}

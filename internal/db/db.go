@@ -81,7 +81,6 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 			fmt.Println(err)
 			return nil, err
 		}
-
 		result = append(result, row)
 	}
 	return result, nil
