@@ -19,6 +19,7 @@ type response struct {
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(addTask(w, r))
 		//default:
 		//	getTaskHandler(w, r)
