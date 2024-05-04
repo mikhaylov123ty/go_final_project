@@ -87,8 +87,8 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 	return result, nil
 }
 
-func (db *dbInstance) AddTask(t *Task) error {
-	res, err := db.Connection.Exec(
+func (db *dbInstance) AddTask(t *Task) (int, error) {
+	exec, err := db.Connection.Exec(
 		"INSERT INTO scheduler (date, title,comment,repeat) VALUES (:date, :title, :comment, :repeat)",
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
@@ -97,8 +97,12 @@ func (db *dbInstance) AddTask(t *Task) error {
 	)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return 0, err
 	}
-	fmt.Println(res.LastInsertId())
-	return nil
+	res, err := exec.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+	return int(res), nil
 }

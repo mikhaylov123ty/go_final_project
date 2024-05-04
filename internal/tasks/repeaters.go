@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	case "m":
 		r.moveMonths()
 	default:
-		return "", errors.New("invalid repeat symbol")
+		return "", errors.New("правило повторения указано в неправильном формате")
 	}
 
 	return r.date.Format("20060102"), nil
@@ -54,13 +53,13 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 					return nil, err
 				}
 				if repeatStr[0] == "d" && val > 400 {
-					return nil, errors.New("invalid repeat value")
+					return nil, errors.New("правило повторения указано в неправильном формате")
 				}
 				if repeatStr[0] == "m" && val <= -3 || val > 31 {
-					return nil, errors.New("invalid repeat value")
+					return nil, errors.New("правило повторения указано в неправильном формате")
 				}
 				if repeatStr[0] == "w" && val > 7 {
-					return nil, errors.New("invalid repeat value")
+					return nil, errors.New("правило повторения указано в неправильном формате")
 				}
 				if val < 0 {
 					negativeVal = append(negativeVal, val)
@@ -79,7 +78,7 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 	} else if repeatStr[0] == "y" {
 		repeatVal[0] = append(repeatVal[0], 1)
 	} else {
-		return nil, errors.New("invalid repeat value")
+		return nil, errors.New("правило повторения указано в неправильном формате")
 	}
 
 	if len(repeatVal[1]) == 0 && repeatStr[0] == "m" {
@@ -111,17 +110,13 @@ func (r *repeater) moveDays() {
 }
 
 func (r *repeater) moveYears() {
-	count := 0
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(r.value[0][0], 0, 0)
-		count++
 	} else {
 		for r.date.Before(r.now) {
 			r.date = r.date.AddDate(r.value[0][0], 0, 0)
-			count++
 		}
 	}
-	fmt.Println("COUNTER YEARS:", count)
 }
 
 func (r *repeater) moveWeeks() {

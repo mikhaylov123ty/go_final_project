@@ -5,9 +5,15 @@ import (
 	"finalProject/internal/db"
 	"finalProject/internal/tasks"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
+
+type response struct {
+	Id    int   `json:"id,omitempty"`
+	Error error `json:"error,omitempty"`
+}
 
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -19,7 +25,6 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.URL.Query())
 	switch r.URL.Query().Has("search") {
 	case true:
 		getTask(w, r)
@@ -71,15 +76,61 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func addTask(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("ADD task")
+
 	newTask := &db.Task{}
+	resp := response{}
 
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
-		fmt.Println("error unmarshalling task")
+
+		log.Println("{\"error\":\"ошибка десериализации JSON\"}", err.Error())
+		w.Write([]byte("{\"error\":\"ошибка десериализации JSON\"}"))
 		return
 	}
 
-	err = db.DbInstance.AddTask(newTask)
-	fmt.Println(newTask)
+	if newTask.Title == "" {
+		log.Println("{\"error\":\"Не указан заголовок задачи\"}")
+		w.Write([]byte("{\"error\":\"Не указан заголовок задачи\"}"))
+		return
+	}
+
+	if newTask.Date == "" {
+		newTask.Date = time.Now().Format("20060102")
+	}
+
+	taskDate, err := time.Parse("20060102", newTask.Date)
+	if err != nil {
+		log.Println("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}", err.Error())
+		w.Write([]byte("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}"))
+		return
+	}
+
+	//TODO think about today case
+	if taskDate.Before(time.Now()) || taskDate.Format("20060102") != time.Now().Format("20060102") {
+		if newTask.Repeat != "" {
+			newTask.Date, err = tasks.NextDate(time.Now(), newTask.Date, newTask.Repeat)
+			if err != nil {
+				log.Println("{\"error\":\"" + err.Error() + "}")
+				w.Write([]byte("{\"error\":\"" + err.Error() + "\"}"))
+				return
+			}
+		} else {
+			newTask.Date = time.Now().Format("20060102")
+		}
+	}
+
+	resp.Id, resp.Error = db.DbInstance.AddTask(newTask)
+
+	json, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Println("Error marshall", err)
+		return
+	}
+	fmt.Println("RESPO", resp)
+	fmt.Println("JSON", string(json))
+	w.Write(json)
 }
+
+//func (r *response) constructResponse() []byte {
+//
+//}
