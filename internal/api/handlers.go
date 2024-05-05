@@ -2,13 +2,14 @@ package api
 
 import (
 	"encoding/json"
-	"finalProject/internal/db"
-	"finalProject/internal/tasks"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"finalProject/internal/db"
+	"finalProject/internal/tasks"
 )
 
 type response struct {
@@ -16,6 +17,7 @@ type response struct {
 	Error error `json:"error,omitempty"`
 }
 
+// Основной обработчик для ручки task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -26,15 +28,18 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Основной обработчик для ручки tasks
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Has("search") {
 	case true:
 		getTask(w, r)
 	default:
-		getAllTasks(w, r)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write(getAllTasks(w, r))
 	}
 }
 
+// Обработчик для nextDate запросов
 func NextDate(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	now, err := time.Parse("20060102", values.Get("now"))
@@ -52,31 +57,31 @@ func NextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(res))
 }
 
-func getAllTasks(w http.ResponseWriter, r *http.Request) {
+// Метод для запроса всех задач
+func getAllTasks(w http.ResponseWriter, r *http.Request) []byte {
 	result, err := db.DbInstance.GetAllTasks()
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 
-	json, err := json.Marshal(result)
+	res, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 
-	fmt.Println("JSON", string(json))
-	_, err = w.Write(json)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	fmt.Println("JSON", string(res))
+
+	return res
 }
 
+// Метод для запроса задачи по id
 func getTask(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Метод для добавления задачи в базу
 func addTask(w http.ResponseWriter, r *http.Request) []byte {
 
 	newTask := &db.Task{}

@@ -138,7 +138,9 @@ func (r *repeater) moveWeeks() {
 }
 
 func (r *repeater) moveMonths() {
-	dates := make([]time.Time, 0)
+	var dates = make([]time.Time, 0)
+	var newDate time.Time
+
 	if r.date.Before(r.now) {
 		r.date = r.now
 	}
@@ -160,7 +162,14 @@ func (r *repeater) moveMonths() {
 			r.date = dates[0]
 			return
 		} else {
-			newDate := dates[0].AddDate(1, 0, 0)
+			// Обработка кейсов с високосными годами
+			if dates[0].Year()%4 == 0 {
+				newDate = dates[0].AddDate(1, 0, -1)
+			} else if dates[0].AddDate(1, 0, 0).Year()%4 == 0 {
+				newDate = dates[0].AddDate(1, 0, +1)
+			} else {
+				newDate = dates[0].AddDate(1, 0, 0)
+			}
 			dates = dates[1:]
 			dates = append(dates, newDate)
 		}
