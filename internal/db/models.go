@@ -1,7 +1,7 @@
 package db
 
 type Task struct {
-	Id      int    `json:"id"`
+	Id      string `json:"id"`
 	Date    string `json:"date,omitempty"`
 	Title   string `json:"title"`
 	Comment string `json:"comment,omitempty"`

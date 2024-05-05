@@ -6,6 +6,7 @@ import (
 	"log"
 	_ "modernc.org/sqlite"
 	"os"
+	"time"
 )
 
 type dbInstance struct {
@@ -66,9 +67,8 @@ func checkFile() bool {
 }
 
 func (db *dbInstance) GetAllTasks() ([]*Task, error) {
-	res, err := db.Connection.Query("SELECT * FROM scheduler")
+	res, err := db.Connection.Query("SELECT * FROM scheduler ORDER BY date")
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	defer res.Close()
@@ -78,9 +78,42 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 		row := &Task{}
 		err = res.Scan(&row.Id, &row.Date, &row.Title, &row.Comment, &row.Repeat)
 		if err != nil {
-			fmt.Println(err)
 			return nil, err
 		}
+		result = append(result, row)
+	}
+	return result, nil
+}
+
+func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
+	//TODO parse here search string and add date recognition, and registry also?
+
+	possibleDate, err := time.Parse("02.01.2006", search)
+	fmt.Println("DATE", possibleDate)
+
+	res, err := db.Connection.Query("SELECT * FROM scheduler WHERE "+
+		"id = :id "+
+		"OR title LIKE :search "+
+		"OR comment LIKE :search "+
+		"OR date = :possibleDate "+
+		"ORDER BY date",
+		sql.Named("id", search),
+		sql.Named("search", "%"+search+"%"),
+		sql.Named("possibleDate", possibleDate.Format("20060102")),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	result := []*Task{}
+	for res.Next() {
+		row := &Task{}
+		err = res.Scan(&row.Id, &row.Date, &row.Title, &row.Comment, &row.Repeat)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("ROW:", row)
 		result = append(result, row)
 	}
 	return result, nil
@@ -95,12 +128,10 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 		sql.Named("repeat", t.Repeat),
 	)
 	if err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 	res, err := exec.LastInsertId()
 	if err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 	return int(res), nil
