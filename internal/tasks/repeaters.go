@@ -37,6 +37,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	return r.date.Format("20060102"), nil
 }
 
+// TODO change here to pointers, no need to throw shadowed strings
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
 	var repeatVal [2][]int
 	var negativeVal []int

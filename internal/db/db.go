@@ -16,42 +16,41 @@ type dbInstance struct {
 
 var DbInstance *dbInstance
 
+// Метод инициализации файла базы данных
 func Init(file string) (*dbInstance, error) {
 	log.Println("Initializing database")
+
+	// Открываем\создаем файл с базой данных
 	db, err := sql.Open("sqlite", file)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Need to create db? ", checkFile())
+	// Проверка наличия файла с базой данных
 	if checkFile() {
-		_, err = db.Exec("CREATE TABLE scheduler (" +
-			"id INTEGER PRIMARY KEY AUTOINCREMENT," +
-			"date INTEGER NOT NULL," +
-			"title TEXT NOT NULL," +
-			"comment TEXT," +
-			"repeat TEXT(128)" +
-			");")
+		_, err = db.Exec(createTableQuery)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec("CREATE INDEX scheduler_id_IDX ON scheduler (id);")
+		_, err = db.Exec(createIdIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec("CREATE INDEX scheduler_date_IDX ON scheduler (date);")
+		_, err = db.Exec(createDateIndex)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	// Проверка соединения
 	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}
 
+	// Передача инстанса в общую переменную
 	DbInstance = &dbInstance{Connection: db}
 
 	return DbInstance, nil
@@ -68,12 +67,15 @@ func checkFile() bool {
 }
 
 func (db *dbInstance) GetAllTasks() ([]*Task, error) {
+
+	// Выполнение запроса к базе
 	res, err := db.Connection.Query("SELECT * FROM scheduler ORDER BY date")
 	if err != nil {
 		return nil, err
 	}
 	defer res.Close()
 
+	// Упаковка результатов в слайс адресов задач
 	result := []*Task{}
 	for res.Next() {
 		row := &Task{}
@@ -83,21 +85,23 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 		}
 		result = append(result, row)
 	}
+
 	return result, nil
 }
 
 func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
-	//TODO parse here search string and add date recognition, and registry also?
 
+	// Парсинг вероятной даты
 	possibleDate, err := time.Parse("02.01.2006", search)
 	fmt.Println("DATE", possibleDate)
 
-	res, err := db.Connection.Query("SELECT * FROM scheduler WHERE "+
-		"id = :id "+
-		"OR title LIKE :search "+
-		"OR comment LIKE :search "+
-		"OR date = :possibleDate "+
-		"ORDER BY date",
+	// Выполнение запроса в базу
+	res, err := db.Connection.Query(`SELECT * FROM scheduler WHERE 
+		id = :id
+		OR title LIKE :search
+		OR comment LIKE :search
+		OR date = :possibleDate
+		ORDER BY date;`,
 		sql.Named("id", search),
 		sql.Named("search", "%"+search+"%"),
 		sql.Named("possibleDate", possibleDate.Format("20060102")),
@@ -107,6 +111,7 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 	}
 	defer res.Close()
 
+	// Упаковка результата в слайс адресов задач
 	result := []*Task{}
 	for res.Next() {
 		row := &Task{}
@@ -114,13 +119,32 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("ROW:", row)
 		result = append(result, row)
 	}
+
 	return result, nil
 }
 
+func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
+	res := &Task{}
+
+	// Выполнение запроса к базе
+	row := db.Connection.QueryRow(`SELECT * FROM scheduler WHERE
+		id = :id;`,
+		sql.Named("id", id))
+
+	// Сканирование строки
+	err := row.Scan(&res.Id, &res.Date, &res.Title, &res.Comment, &res.Repeat)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (db *dbInstance) AddTask(t *Task) (int, error) {
+
+	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
 		"INSERT INTO scheduler (date, title,comment,repeat) VALUES (:date, :title, :comment, :repeat)",
 		sql.Named("date", t.Date),
@@ -131,9 +155,12 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	// Передача последнего id записи
 	res, err := exec.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
+
 	return int(res), nil
 }

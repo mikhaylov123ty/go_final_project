@@ -18,12 +18,15 @@ type response struct {
 
 // Основной обработчик для ручки task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
+	switch {
+	case r.Method == "POST":
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(addTask(w, r))
-		//default:
-		//	getTaskHandler(w, r)
+		w.Write(addTask(r))
+	case r.URL.Query().Has("id") == true:
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write(getTaskById(r))
+	default:
+		http.Error(w, "", http.StatusBadRequest)
 	}
 }
 
@@ -32,7 +35,7 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Has("search") {
 	case true:
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(getTask(r))
+		w.Write(getTasksBySearch(r))
 	default:
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(getAllTasks())
@@ -59,8 +62,8 @@ func getAllTasks() []byte {
 	return res
 }
 
-// Метод для запроса задачи по поиску
-func getTask(r *http.Request) []byte {
+// Метод для поиска задачи
+func getTasksBySearch(r *http.Request) []byte {
 	var err error
 	newResponse := &response{}
 
@@ -83,7 +86,7 @@ func getTask(r *http.Request) []byte {
 }
 
 // Метод для добавления задачи в базу
-func addTask(w http.ResponseWriter, r *http.Request) []byte {
+func addTask(r *http.Request) []byte {
 	newTask := &db.Task{}
 
 	err := json.NewDecoder(r.Body).Decode(&newTask)
@@ -127,6 +130,29 @@ func addTask(w http.ResponseWriter, r *http.Request) []byte {
 	strID := strconv.Itoa(id)
 
 	return []byte("{\"id\":\"" + strID + "\"}")
+}
+
+// Метод для запроса задачи по id
+func getTaskById(r *http.Request) []byte {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		log.Println("{\"error\":\"Задача не найдена\"}")
+		return []byte("{\"error\":\"Задача не найдена\"}")
+	}
+
+	respTask, err := db.DbInstance.GetTaskByID(r.URL.Query().Get("id"))
+	if err != nil {
+		log.Println("{\"error\":\"Задача не найдена\"}", err.Error())
+		return []byte("{\"error\":\"Задача не найдена\"}")
+	}
+
+	res, err := json.Marshal(respTask)
+	if err != nil {
+		log.Println("{\"error\":\"ошибка десериализации JSON\"}", err.Error())
+		return []byte("{\"error\":\"ошибка десериализации JSON\"}")
+	}
+
+	return res
 }
 
 // Обработчик для nextDate запросов
