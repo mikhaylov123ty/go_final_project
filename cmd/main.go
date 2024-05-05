@@ -1,10 +1,11 @@
 package main
 
 import (
-	"finalProject/internal/db"
-	"finalProject/internal/web"
 	"log"
 	"os"
+
+	"finalProject/internal/db"
+	"finalProject/internal/web"
 )
 
 func main() {

@@ -1,9 +1,10 @@
 package web
 
 import (
-	"finalProject/internal/api"
 	"log"
 	"net/http"
+
+	"finalProject/internal/api"
 )
 
 type server struct {

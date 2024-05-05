@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	_ "modernc.org/sqlite"
 	"os"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 type dbInstance struct {
