@@ -8,19 +8,23 @@ import (
 	"time"
 )
 
+// структура для модификатора повторений
 type repeater struct {
-	modifier string
-	value    [2][]int
-	date     time.Time
-	now      time.Time
+	modifier string    // модификатор повторения d, y, w, m
+	value    [2][]int  // значения модификаторов повторения
+	date     time.Time // дата задачи
+	now      time.Time // текущая дата
 }
 
-func NextDate(now time.Time, date string, repeat string) (string, error) {
+// Основной обработчик для поиска следующей даты повторений
+func NextDateHandler(now time.Time, date string, repeat string) (string, error) {
+	// Парсинг условия повторения
 	r, err := parseRepeater(now, date, repeat)
 	if err != nil {
 		return "", err
 	}
 
+	// Распределение повторения
 	switch r.modifier {
 	case "d":
 		r.moveDays()
@@ -43,13 +47,17 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 	var negativeVal []int
 	var err error
 
+	// Парсинг строки с условием повторения
 	repeatStr := strings.Split(repeat, " ")
+
+	// Обработка входных данных, если найдены значения у модификаторов повторения
 	if len(repeatStr) > 1 {
 		for i := 1; i < len(repeatStr); i++ {
 			repeatStrVal := strings.Split(repeatStr[i], ",")
+
+			// Проверка каждого из значений условия повторения
 			for _, v := range repeatStrVal {
 				val, err := strconv.Atoi(v)
-
 				if err != nil {
 					return nil, err
 				}
@@ -70,27 +78,41 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 			}
 		}
 
+		// Сортировка массива, для вывода упорядоченных дат проведения задачи
 		for _, v := range repeatVal {
 			sort.Ints(v)
 		}
-		sort.Ints(negativeVal)
 
+		// Добавление в конце к массиву отсортированных отрицательных значений
+		// в любых сценариях они указывают на предпоследний и последний дни месяца
+		sort.Ints(negativeVal)
 		repeatVal[0] = append(repeatVal[0], negativeVal...)
+
+		// Обработка сценария, когда модификатору не требуется значение (смена года)
 	} else if repeatStr[0] == "y" {
 		repeatVal[0] = append(repeatVal[0], 1)
+
+		// Возврат ошибки, если указан неверный формат
 	} else {
 		return nil, errors.New("правило повторения указано в неправильном формате")
 	}
 
+	// Обработка условия, если выбран модификатор повторения месяц
+	// без указания конкретных месяцев
 	if len(repeatVal[1]) == 0 && repeatStr[0] == "m" {
+
+		// Если указано 31е число, то добавляем только те месяцы, где 31 день
 		if repeatVal[0][0] == 31 {
 			repeatVal[1] = append(repeatVal[1], 1, 3, 5, 7, 8, 10, 12)
 		}
+
+		// В остальных случаях добавляем все 12 месцев
 		for i := 1; i <= 12; i++ {
 			repeatVal[1] = append(repeatVal[1], i)
 		}
 	}
 
+	// Заполняем обработанными данными экземпляр повторения
 	r := &repeater{modifier: repeatStr[0], value: repeatVal, now: now}
 	r.date, err = time.Parse("20060102", date)
 	if err != nil {
@@ -100,6 +122,7 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 	return r, nil
 }
 
+// Метод поиска следующей даты проведения в сценарии с днями
 func (r *repeater) moveDays() {
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(0, 0, r.value[0][0])
@@ -110,6 +133,7 @@ func (r *repeater) moveDays() {
 	}
 }
 
+// Метод поиска следующей даты проведения в сценарии с годами
 func (r *repeater) moveYears() {
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(r.value[0][0], 0, 0)
@@ -120,6 +144,7 @@ func (r *repeater) moveYears() {
 	}
 }
 
+// Метод поиска следующей даты проведения в сценарии с днями недели
 func (r *repeater) moveWeeks() {
 	var weekDays string
 	for _, weekDay := range r.value[0] {
@@ -138,6 +163,7 @@ func (r *repeater) moveWeeks() {
 	}
 }
 
+// Метод поиска следующей даты проведения в сценарии с месяцами
 func (r *repeater) moveMonths() {
 	var dates = make([]time.Time, 0)
 	var newDate time.Time

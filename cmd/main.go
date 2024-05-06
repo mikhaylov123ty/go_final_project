@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	// Инициализация базы
 	dbInstance, err := db.Init(os.Getenv("TODO_DBFILE"))
 	if err != nil {
 		log.Fatal(err.Error())
@@ -16,10 +17,10 @@ func main() {
 
 	defer dbInstance.Connection.Close()
 
+	// Инициализация веб-сервера
 	server := web.Init(os.Getenv("TODO_PORT"))
 	err = server.Start("web")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
 }

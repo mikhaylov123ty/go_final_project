@@ -1,5 +1,6 @@
 package db
 
+// Константы для создания таблицы и индексов
 const (
 	createTableQuery = `CREATE TABLE scheduler (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -12,6 +13,7 @@ const (
 	createDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
 )
 
+// Структура для задач
 type Task struct {
 	Id      string `json:"id"`
 	Date    string `json:"date,omitempty"`

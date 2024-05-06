@@ -17,6 +17,7 @@ type dbInstance struct {
 var DbInstance *dbInstance
 
 // Метод инициализации файла базы данных
+// file - путь к файлу с базой
 func Init(file string) (*dbInstance, error) {
 	log.Println("Initializing database")
 
@@ -89,6 +90,8 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 	return result, nil
 }
 
+// Метод для поиска задач
+// search - текст, который вводится в поисковую строку
 func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 
 	// Парсинг вероятной даты
@@ -125,6 +128,7 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 	return result, nil
 }
 
+// Метод для поиска задачи по id
 func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
 	res := &Task{}
 
@@ -142,6 +146,8 @@ func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
 	return res, nil
 }
 
+// Метод для добавления задачи
+// t - экземпляр структуры Task из models
 func (db *dbInstance) AddTask(t *Task) (int, error) {
 
 	// Выполнение запроса к базе
