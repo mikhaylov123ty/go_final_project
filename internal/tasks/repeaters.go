@@ -124,9 +124,11 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 
 // Метод поиска следующей даты проведения в сценарии с днями
 func (r *repeater) moveDays() {
+	// Если текущая дата меньше даты проведения, добавляем дни к дате проведения
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(0, 0, r.value[0][0])
 	} else {
+		// В противном случае добавляем дни, пока дата проведения не станет больше текущей
 		for r.date.Before(r.now) {
 			r.date = r.date.AddDate(0, 0, r.value[0][0])
 		}
@@ -135,9 +137,11 @@ func (r *repeater) moveDays() {
 
 // Метод поиска следующей даты проведения в сценарии с годами
 func (r *repeater) moveYears() {
+	// Если текущая дата меньше даты проведения, добавляем года к дате проведения
 	if r.now.Before(r.date) {
 		r.date = r.date.AddDate(r.value[0][0], 0, 0)
 	} else {
+		// В противном случае добавляем года, пока дата проведения не станет больше текущей
 		for r.date.Before(r.now) {
 			r.date = r.date.AddDate(r.value[0][0], 0, 0)
 		}
@@ -147,17 +151,21 @@ func (r *repeater) moveYears() {
 // Метод поиска следующей даты проведения в сценарии с днями недели
 func (r *repeater) moveWeeks() {
 	var weekDays string
+	// Для каждого из значений дня недели, формируем строку с названиями этих дней
 	for _, weekDay := range r.value[0] {
 		if weekDay == 7 {
 			weekDay = 0
 		}
 		weekDays += time.Weekday(weekDay).String()
 	}
+
+	// Если дата проведения меньше текущей даты, устанавливаем дату проведения на текущую дату
 	if r.date.Before(r.now) {
 		r.date = r.now
 		r.now = r.now.AddDate(0, 0, 1)
 	}
 
+	// Добавляем дни пока дата проведения меньше текущей и не будет найден ближайший день проведения
 	for r.date.Before(r.now) || !(strings.Contains(weekDays, r.date.Weekday().String())) {
 		r.date = r.date.AddDate(0, 0, 1)
 	}
@@ -168,10 +176,13 @@ func (r *repeater) moveMonths() {
 	var dates = make([]time.Time, 0)
 	var newDate time.Time
 
+	// Если дата проведения меньше текущей даты, устанавливаем дату проведения на текущую дату
 	if r.date.Before(r.now) {
 		r.date = r.now
 	}
 
+	// Составление всех возможных пар дня и месяца
+	// Выходной список в отсортированном порядке
 	for _, month := range r.value[1] {
 		for _, day := range r.value[0] {
 			m := month
@@ -184,7 +195,10 @@ func (r *repeater) moveMonths() {
 		}
 	}
 
+	// Проверка возможных дат проведения
 	for len(dates) > 0 {
+
+		// Если текущая дата проведения меньше, то устанавливается ближайшая дата
 		if r.date.Before(dates[0]) {
 			r.date = dates[0]
 			return
@@ -195,8 +209,11 @@ func (r *repeater) moveMonths() {
 			} else if dates[0].AddDate(1, 0, 0).Year()%4 == 0 {
 				newDate = dates[0].AddDate(1, 0, +1)
 			} else {
+				// Если текущая дата проведения больше, добавляем к ближайшей дате год
 				newDate = dates[0].AddDate(1, 0, 0)
 			}
+
+			// Исключаем ближайшую дату из слайса и добавляем в конец эту же дату на следующий год
 			dates = dates[1:]
 			dates = append(dates, newDate)
 		}
