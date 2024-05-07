@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	returnError = "правило повторения указано в неправильном формате"
+)
+
 // структура для модификатора повторений
 type repeater struct {
 	modifier string    // модификатор повторения d, y, w, m
@@ -35,7 +39,7 @@ func NextDateHandler(now time.Time, date string, repeat string) (string, error) 
 	case "m":
 		r.moveMonths()
 	default:
-		return "", errors.New("правило повторения указано в неправильном формате")
+		return "", errors.New(returnError)
 	}
 
 	return r.date.Format("20060102"), nil
@@ -54,7 +58,10 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 	if len(repeatStr) > 1 {
 		for i := 1; i < len(repeatStr); i++ {
 			repeatStrVal := strings.Split(repeatStr[i], ",")
+			if repeatStrVal[0] == "x" {
+				return nil, errors.New(returnError)
 
+			}
 			// Проверка каждого из значений условия повторения
 			for _, v := range repeatStrVal {
 				val, err := strconv.Atoi(v)
@@ -62,13 +69,13 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 					return nil, err
 				}
 				if repeatStr[0] == "d" && val > 400 {
-					return nil, errors.New("правило повторения указано в неправильном формате")
+					return nil, errors.New(returnError)
 				}
-				if repeatStr[0] == "m" && val <= -3 || val > 31 {
-					return nil, errors.New("правило повторения указано в неправильном формате")
+				if repeatStr[0] == "m" && (val <= -3 || val > 31) {
+					return nil, errors.New(returnError)
 				}
 				if repeatStr[0] == "w" && val > 7 {
-					return nil, errors.New("правило повторения указано в неправильном формате")
+					return nil, errors.New(returnError)
 				}
 				if val < 0 {
 					negativeVal = append(negativeVal, val)
@@ -94,7 +101,7 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 
 		// Возврат ошибки, если указан неверный формат
 	} else {
-		return nil, errors.New("правило повторения указано в неправильном формате")
+		return nil, errors.New(returnError)
 	}
 
 	// Обработка условия, если выбран модификатор повторения месяц

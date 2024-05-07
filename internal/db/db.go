@@ -170,3 +170,35 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 
 	return int(res), nil
 }
+
+func (db *dbInstance) UpateTask(t *Task) (int, error) {
+
+	// Проверка, что такой id существует
+	_, err := db.GetTaskByID(t.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	// Выполнение запроса к базе
+	exec, err := db.Connection.Exec(
+		`UPDATE scheduler 
+    SET date = :date, title =:title,comment = :comment,repeat = :repeat
+WHERE id = :id;`,
+		sql.Named("id", t.Id),
+		sql.Named("date", t.Date),
+		sql.Named("title", t.Title),
+		sql.Named("comment", t.Comment),
+		sql.Named("repeat", t.Repeat),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	// Передача последнего id записи
+	res, err := exec.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(res), nil
+}

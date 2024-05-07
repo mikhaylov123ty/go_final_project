@@ -21,10 +21,15 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	// Распределение допустимых запросов
 	switch {
 
-	// Запрос POST
+	// Запрос POST, создание задачи
 	case r.Method == "POST":
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(addTask(r))
+
+	// Запрос PUT, изменение задачи
+	case r.Method == "PUT":
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write(changeTask(r))
 
 	// Запрос по id задачи
 	case r.URL.Query().Has("id") == true:
@@ -33,7 +38,9 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	// По умолчанию возвращает статус с ошибкой
 	default:
-		http.Error(w, "", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write([]byte("{\"error\":\"Не указан идентификатор\"}"))
+
 	}
 }
 
@@ -102,48 +109,13 @@ func getTasksBySearch(r *http.Request) []byte {
 func addTask(r *http.Request) []byte {
 	newTask := &db.Task{}
 
-	// Десериализация JSON
-	err := json.NewDecoder(r.Body).Decode(&newTask)
+	//TODO don't like how here callback bytes res and error
+
+	// Проверка вводных данных задачи
+	res, err := newTask.CheckTask(r)
 	if err != nil {
-		log.Println("{\"error\":\"ошибка десериализации JSON\"}", err.Error())
-		return []byte("{\"error\":\"ошибка десериализации JSON\"}")
-	}
-
-	// Обработка условия, если обязательно поле "Дата" оказалось пустым
-	// Установка текущей даты
-	if newTask.Date == "" {
-		newTask.Date = time.Now().Format("20060102")
-	}
-
-	// Обработка условия, если обязательно поле "Заголовок" оказалось пустым
-	// Возврат ошибки
-	if newTask.Title == "" {
-		log.Println("{\"error\":\"Не указан заголовок задачи\"}")
-		return []byte("{\"error\":\"Не указан заголовок задачи\"}")
-	}
-
-	// Проверка соответствия формата даты
-	taskDate, err := time.Parse("20060102", newTask.Date)
-	if err != nil {
-		log.Println("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}", err.Error())
-		return []byte("{\"error\":\"Дата представлена в формате, отличном от 20060102\"}")
-	}
-
-	// Обработка условия, если текущая дата меньше даты задачи
-	if taskDate.Before(time.Now().UTC().Round(24*time.Hour).AddDate(0, 0, -1)) {
-
-		// Обработка условия с повторением, если он не пустой и поиск следующей даты от даты повторения
-		if newTask.Repeat != "" {
-			newTask.Date, err = tasks.NextDateHandler(time.Now(), newTask.Date, newTask.Repeat)
-			if err != nil {
-				log.Println("{\"error\":\"" + err.Error() + "}")
-				return []byte("{\"error\":\"" + err.Error() + "\"}")
-			}
-
-			// Установка текущей даты, если условия повторения нет
-		} else {
-			newTask.Date = time.Now().Format("20060102")
-		}
+		log.Println(err.Error())
+		return res
 	}
 
 	// Добавление задачи в базу
@@ -152,6 +124,7 @@ func addTask(r *http.Request) []byte {
 		log.Println("{\"error\":\"Не удалось добавить в базу\"}", err.Error())
 		return []byte("{\"error\":\"Не удалось добавить в базу\"}")
 	}
+
 	strID := strconv.Itoa(id)
 
 	return []byte("{\"id\":\"" + strID + "\"}")
@@ -182,6 +155,31 @@ func getTaskById(r *http.Request) []byte {
 	}
 
 	return res
+}
+
+// Метод для изменения задачи
+func changeTask(r *http.Request) []byte {
+	newTask := &db.Task{}
+
+	//TODO don't like how here callback bytes res and error
+
+	// Проверка вводных данных задачи
+	res, err := newTask.CheckTask(r)
+	if err != nil {
+		log.Println(err.Error())
+		return res
+	}
+
+	fmt.Println(newTask)
+
+	// Добавление задачи в базу
+	_, err = db.DbInstance.UpateTask(newTask)
+	if err != nil {
+		log.Println("{\"error\":\"Не удалось обновить запись в базе\"}", err.Error())
+		return []byte("{\"error\":\"Не удалось обновить запись в базе\"}")
+	}
+
+	return []byte("{}")
 }
 
 // Обработчик для ручки api/nextDate
