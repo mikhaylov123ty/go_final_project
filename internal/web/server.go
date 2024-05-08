@@ -29,6 +29,7 @@ func (s *server) Start(webDir string) error {
 	// Перечисление ручек и их обработок
 	http.HandleFunc("/api/nextdate", api.NextDate)
 	http.HandleFunc("/api/task", api.TaskHandler)
+	http.HandleFunc("/api/task/done", api.TaskDoneHandler)
 	http.HandleFunc("/api/tasks", api.TasksHandler)
 
 	// Запуск

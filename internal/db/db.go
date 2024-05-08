@@ -172,13 +172,6 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 }
 
 func (db *dbInstance) UpateTask(t *Task) (int, error) {
-
-	// Проверка, что такой id существует
-	_, err := db.GetTaskByID(t.Id)
-	if err != nil {
-		return 0, err
-	}
-
 	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
 		`UPDATE scheduler 
@@ -201,4 +194,19 @@ WHERE id = :id;`,
 	}
 
 	return int(res), nil
+}
+
+func (db *dbInstance) DeleteTask(id string) error {
+
+	_, err := db.Connection.Exec(
+		`DELETE FROM scheduler
+       WHERE id = :id;`,
+		sql.Named("id", id),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
