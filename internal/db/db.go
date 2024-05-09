@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -96,7 +95,6 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 
 	// Парсинг вероятной даты
 	possibleDate, err := time.Parse("02.01.2006", search)
-	fmt.Println("DATE", possibleDate)
 
 	// Выполнение запроса в базу
 	res, err := db.Connection.Query(`SELECT * FROM scheduler WHERE 

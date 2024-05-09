@@ -31,6 +31,7 @@ func (s *server) Start(webDir string) error {
 	http.HandleFunc("/api/task", api.TaskHandler)
 	http.HandleFunc("/api/task/done", api.TaskDoneHandler)
 	http.HandleFunc("/api/tasks", api.TasksHandler)
+	http.HandleFunc("/api/sign", api.SignHandler)
 
 	// Запуск
 	err := http.ListenAndServe(":"+s.port, nil)

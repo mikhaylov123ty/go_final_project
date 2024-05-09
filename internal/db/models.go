@@ -32,6 +32,12 @@ type Task struct {
 	Repeat  string `json:"repeat,omitempty"`
 }
 
+// Структура для ответов
+type Response struct {
+	Tasks    []*Task `json:"tasks"`
+	Password string  `json:"password,omitempty"`
+}
+
 func (t *Task) CheckTask(r *http.Request) ([]byte, error) {
 	// Десериализация JSON
 	err := json.NewDecoder(r.Body).Decode(&t)
