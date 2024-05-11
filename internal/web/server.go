@@ -1,6 +1,7 @@
 package web
 
 import (
+	"finalProject/internal/api/handlers"
 	"log"
 	"net/http"
 
@@ -28,9 +29,10 @@ func (s *server) Start(webDir string) error {
 
 	// Перечисление ручек и их обработок
 	http.HandleFunc("/api/nextdate", api.NextDate)
-	http.HandleFunc("/api/task", api.TaskHandler)
-	http.HandleFunc("/api/task/done", api.TaskDoneHandler)
-	http.HandleFunc("/api/tasks", api.TasksHandler)
+
+	http.HandleFunc("/api/task", handlers.Auth(api.TaskHandler))
+	http.HandleFunc("/api/task/done", handlers.Auth(api.TaskDoneHandler))
+	http.HandleFunc("/api/tasks", handlers.Auth(api.TasksHandler))
 	http.HandleFunc("/api/signin", api.SignHandler)
 
 	// Запуск
