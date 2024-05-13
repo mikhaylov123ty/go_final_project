@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	fmt.Println(os.Getenv("TODO_DBFILE"))
 	// Инициализация базы
 	dbInstance, err := db.Init(os.Getenv("TODO_DBFILE"))
 	if err != nil {
