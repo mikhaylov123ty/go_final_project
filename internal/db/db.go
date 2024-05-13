@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -10,15 +9,18 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// Структура подключения к БД
 type dbInstance struct {
 	Connection *sql.DB
 }
 
+// Общая переменная инстанса подключения к БД
 var DbInstance *dbInstance
 
-// Метод инициализации файла базы данных
-// file - путь к файлу с базой
+// Метод инициализации файла БД
+// file - путь к файлу с БД
 func Init(file string) (*dbInstance, error) {
+
 	log.Println("Initializing database")
 
 	// Открываем\создаем файл с базой данных
@@ -57,20 +59,29 @@ func Init(file string) (*dbInstance, error) {
 	return DbInstance, nil
 }
 
+// Метод для проверки наличия файла БД
 func checkFile() bool {
+
+	// Проверка файла по пути из переменной окружения
 	_, err := os.Stat(os.Getenv("TODO_DBFILE"))
 
+	// Установка флага
 	var install bool
 	if err != nil {
 		install = true
 	}
+
 	return install
 }
 
+// Метод для запроса в БД и вывода всех задач
 func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 
 	// Выполнение запроса к базе
-	res, err := db.Connection.Query("SELECT * FROM scheduler ORDER BY date")
+	res, err := db.Connection.Query(
+		`SELECT * FROM scheduler
+         		ORDER BY date`,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +101,7 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 	return result, nil
 }
 
-// Метод для поиска задач
+// Метод для поиска задач в БД
 // search - текст, который вводится в поисковую строку
 func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 
@@ -98,12 +109,13 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 	possibleDate, err := time.Parse("02.01.2006", search)
 
 	// Выполнение запроса в базу
-	res, err := db.Connection.Query(`SELECT * FROM scheduler WHERE 
-		id = :id
-		OR title LIKE :search
-		OR comment LIKE :search
-		OR date = :possibleDate
-		ORDER BY date;`,
+	res, err := db.Connection.Query(
+		`SELECT * FROM scheduler
+				WHERE id = :id
+				OR title LIKE :search
+				OR comment LIKE :search
+				OR date = :possibleDate
+				ORDER BY date;`,
 		sql.Named("id", search),
 		sql.Named("search", "%"+search+"%"),
 		sql.Named("possibleDate", possibleDate.Format("20060102")),
@@ -124,18 +136,19 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 		result = append(result, row)
 	}
 
-	fmt.Println(result == nil)
-
 	return result, nil
 }
 
-// Метод для поиска задачи по id
+// Метод для поиска задачи в БД по id
+// id - идентификатор задачи
 func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
+
 	res := &Task{}
 
 	// Выполнение запроса к базе
-	row := db.Connection.QueryRow(`SELECT * FROM scheduler WHERE
-		id = :id;`,
+	row := db.Connection.QueryRow(
+		`SELECT * FROM scheduler 
+         		WHERE id = :id;`,
 		sql.Named("id", id))
 
 	// Сканирование строки
@@ -147,13 +160,14 @@ func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
 	return res, nil
 }
 
-// Метод для добавления задачи
-// t - экземпляр структуры Task из models
+// Метод для добавления задачи в БД
+// t - адрес экземпляра структуры Task из models
 func (db *dbInstance) AddTask(t *Task) (int, error) {
 
 	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
-		"INSERT INTO scheduler (date, title,comment,repeat) VALUES (:date, :title, :comment, :repeat)",
+		`INSERT INTO scheduler (date, title,comment,repeat)
+				VALUES (:date, :title, :comment, :repeat)`,
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
 		sql.Named("comment", t.Comment),
@@ -172,12 +186,18 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 	return int(res), nil
 }
 
+// Метод для обновления задачи в БД
+// t - адрес экземпляра структуры Task из models
 func (db *dbInstance) UpateTask(t *Task) (int, error) {
+
 	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
 		`UPDATE scheduler 
-    SET date = :date, title =:title,comment = :comment,repeat = :repeat
-WHERE id = :id;`,
+				SET date = :date,
+					title =:title,
+					comment = :comment,
+					repeat = :repeat
+				WHERE id = :id;`,
 		sql.Named("id", t.Id),
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
@@ -197,8 +217,11 @@ WHERE id = :id;`,
 	return int(res), nil
 }
 
+// Метод для удаления задачи из БД
+// id - идентификатор задачи
 func (db *dbInstance) DeleteTask(id string) error {
 
+	// Выполнение запроса к базе
 	_, err := db.Connection.Exec(
 		`DELETE FROM scheduler
        WHERE id = :id;`,

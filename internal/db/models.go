@@ -15,9 +15,9 @@ const (
 
 // Структура для задач
 type Task struct {
-	Id      string `json:"id"`
+	Id      string `json:"id,omitempty"`
 	Date    string `json:"date,omitempty"`
-	Title   string `json:"title"`
+	Title   string `json:"title,omitempty"`
 	Comment string `json:"comment,omitempty"`
 	Repeat  string `json:"repeat,omitempty"`
 }
@@ -29,7 +29,7 @@ type Request struct {
 
 // Структура для ответов
 type Response struct {
-	Tasks []*Task `json:"tasks"`
+	Tasks []*Task `json:"tasks,omitempty"`
 	Id    int     `json:"id,omitempty"`
 	Error string  `json:"error,omitempty"`
 	Token string  `json:"token,omitempty"`

@@ -22,6 +22,7 @@ type repeater struct {
 
 // Основной обработчик для поиска следующей даты повторений
 func NextDateHandler(now time.Time, date string, repeat string) (string, error) {
+
 	// Парсинг условия повторения
 	r, err := parseRepeater(now, date, repeat)
 	if err != nil {

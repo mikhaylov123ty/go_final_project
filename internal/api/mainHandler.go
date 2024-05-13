@@ -9,8 +9,6 @@ import (
 	"finalProject/internal/tasks"
 )
 
-//TODO don't like how here callback bytes res and error
-
 // Основной обработчик для ручки api/task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")

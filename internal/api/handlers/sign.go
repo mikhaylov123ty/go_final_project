@@ -12,8 +12,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Метод для аутентификации в сервис
+// Метод для аутентификации в сервис с помощью пароля
 func Signin(r *http.Request) []byte {
+
 	response := &db.Response{}
 	request := &db.Request{}
 
@@ -40,10 +41,12 @@ func Signin(r *http.Request) []byte {
 	if err != nil {
 		return response.LogResponseError(err.Error())
 	}
-
+	
+	// Сериализация JSON
 	return response.Marshal()
 }
 
+// Метод для авторизации с помощью токена
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 

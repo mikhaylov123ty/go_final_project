@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"finalProject/internal/db"
@@ -29,9 +28,13 @@ func GetTasksBySearch(r *http.Request) []byte {
 
 	// Выполнение запроса к базе
 	response.Tasks, err = db.DbInstance.GetTaskBySearch(r.URL.Query().Get("search"))
-	fmt.Println(len(response.Tasks))
 	if err != nil {
 		return response.LogResponseError(err.Error())
+	}
+
+	// Проверка на пустой слайс. Сериализация его не обрабатывает, т.к. установлен omitempty для этого поля
+	if len(response.Tasks) == 0 {
+		return []byte("{\"tasks\":[]}")
 	}
 
 	// Сериализация JSON

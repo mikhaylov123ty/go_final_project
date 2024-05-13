@@ -1,11 +1,11 @@
 package web
 
 import (
-	"finalProject/internal/api/handlers"
 	"log"
 	"net/http"
 
 	"finalProject/internal/api"
+	"finalProject/internal/api/handlers"
 )
 
 // Структура веб-сервера

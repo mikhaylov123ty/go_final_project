@@ -10,17 +10,21 @@ import (
 	"finalProject/internal/tasks"
 )
 
+// Метод для сериализации ответов
 func (r *Response) Marshal() []byte {
 	res, err := json.Marshal(r)
 	if err != nil {
 		log.Println("Error marshalling response:", err)
 	}
+
 	return res
 }
 
+// Метод для логирования ошибки и сериализации ответа
 func (r *Response) LogResponseError(s string) []byte {
 	r.Error = s
 	log.Println(r.Error)
+
 	return r.Marshal()
 }
 
