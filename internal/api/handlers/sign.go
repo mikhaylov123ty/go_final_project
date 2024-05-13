@@ -2,58 +2,73 @@ package handlers
 
 import (
 	"encoding/json"
-	"finalProject/internal/db"
-	"github.com/golang-jwt/jwt/v5"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"finalProject/internal/db"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Метод для аутентификации в сервис
 func Signin(r *http.Request) []byte {
-	newResponse := &db.Response{}
+	response := &db.Response{}
+	request := &db.Request{}
+
+	// Чтение тела запроса
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return response.LogResponseError(err.Error())
 	}
 
-	err = json.Unmarshal(body, &newResponse)
+	// Преобразование в структуру
+	err = json.Unmarshal(body, &request)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return response.LogResponseError(err.Error())
 	}
 
+	// Проверка переданного пароля
+	if request.Password != os.Getenv("TODO_PASSWORD") {
+		return response.LogResponseError("Неверный пароль")
+	}
+
+	// Формирование токена
 	token := jwt.New(jwt.SigningMethodHS256)
-	tokenString, err := token.SignedString([]byte(newResponse.Password))
+	response.Token, err = token.SignedString([]byte(request.Password))
 	if err != nil {
-		log.Println(err)
-		return nil
+		return response.LogResponseError(err.Error())
 	}
 
-	return []byte("{\"token\":\"" + tokenString + "\"}")
+	return response.Marshal()
 }
 
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Проверка наличия пароля
 		if len(os.Getenv("TODO_PASSWORD")) > 0 {
+
+			// Проверка куки
 			cookie, err := r.Cookie("token")
 			if err != nil {
-				log.Println(err)
-				http.Error(w, "Error Parse", http.StatusUnauthorized)
+				log.Println("No cookie found", err)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
 				return
 			}
 
+			// Парсинг токена
 			parse, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
 				return []byte(os.Getenv("TODO_PASSWORD")), nil
 			})
 			if err != nil {
-				log.Println("Error Parse", err)
-				http.Error(w, "Authentification required", http.StatusUnauthorized)
+				log.Println("Error parse token", err)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
 				return
 			}
 
+			// Проверка на валидность токена
 			if !parse.Valid {
 				log.Println("Token is invalid")
 				http.Error(w, "Token is invalid", http.StatusUnauthorized)
@@ -61,6 +76,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
+		// Запуск следующей обработки
 		next(w, r)
 	})
 }

@@ -5,8 +5,6 @@ import (
 	"finalProject/internal/tasks"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"finalProject/internal/db"
@@ -14,51 +12,46 @@ import (
 
 // Метод для добавления задачи в базу
 func AddTask(r *http.Request) []byte {
+	var err error
 	newTask := &db.Task{}
 
-	//TODO don't like how here callback bytes res and error
-
 	// Проверка вводных данных задачи
-	res, err := newTask.CheckTask(r)
-	if err != nil {
-		log.Println(err.Error())
-		return res
+	response := newTask.CheckTask(r)
+	if response.Error != "" {
+		log.Println(response.Error)
+		return response.Marshal()
 	}
 
 	// Добавление задачи в базу
-	id, err := db.DbInstance.AddTask(newTask)
+	response.Id, err = db.DbInstance.AddTask(newTask)
 	if err != nil {
-		log.Println("{\"error\":\"Не удалось добавить в базу\"}", err.Error())
-		return []byte("{\"error\":\"Не удалось добавить в базу\"}")
+		return response.LogResponseError(err.Error())
 	}
 
-	strID := strconv.Itoa(id)
-
-	return []byte("{\"id\":\"" + strID + "\"}")
+	return response.Marshal()
 }
 
 // Метод для изменения задачи
 func ChangeTask(r *http.Request) []byte {
+	var err error
 	modifiedTask := &db.Task{}
 
 	// Проверка вводных данных задачи
-	res, err := modifiedTask.CheckTask(r)
-	if err != nil {
-		log.Println(err.Error())
-		return res
+	response := modifiedTask.CheckTask(r)
+	if response.Error != "" {
+		log.Println(response.Error)
+		return response.Marshal()
 	}
 
 	_, err = db.DbInstance.GetTaskByID(modifiedTask.Id)
 	if err != nil {
-		log.Println("{\"error\":\"Задача не найдена\"}", err.Error())
-		return []byte("{\"error\":\"Задача не найдена\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	// Добавление задачи в базу
 	_, err = db.DbInstance.UpateTask(modifiedTask)
 	if err != nil {
-		log.Println("{\"error\":\"Не удалось обновить запись в базе\"}", err.Error())
-		return []byte("{\"error\":\"Не удалось обновить запись в базе\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	return []byte("{}")
@@ -67,16 +60,15 @@ func ChangeTask(r *http.Request) []byte {
 // Метод для удаления задачи
 func DeleteTaskById(r *http.Request) []byte {
 	taskID := r.URL.Query().Get("id")
+	response := &db.Response{}
 
 	task, err := db.DbInstance.GetTaskByID(taskID)
 	if err != nil {
-		log.Println("{\"error\":\"Задача не найдена\"}", err.Error())
-		return []byte("{\"error\":\"Задача не найдена\"}")
+		return response.LogResponseError(err.Error())
 	}
 	err = db.DbInstance.DeleteTask(task.Id)
 	if err != nil {
-		log.Println("{\"error\":\"Не удалось удалить запись в базе\"}", err.Error())
-		return []byte("{\"error\":\"Не удалось удалить запись в базе\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	return []byte("{}")
@@ -84,26 +76,24 @@ func DeleteTaskById(r *http.Request) []byte {
 
 // Метод для запроса задачи по id
 func GetTaskById(r *http.Request) []byte {
+	response := &db.Response{}
 
 	// Проверка аргумента id в ссылке
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		log.Println("{\"error\":\"Задача не найдена\"}")
-		return []byte("{\"error\":\"Задача не найдена\"}")
+		return response.LogResponseError("Задача не найдена")
 	}
 
 	// Выполнение запроса в базу по аргументу из ссылки
 	respTask, err := db.DbInstance.GetTaskByID(id)
 	if err != nil {
-		log.Println("{\"error\":\"Задача не найдена\"}", err.Error())
-		return []byte("{\"error\":\"Задача не найдена\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	// Сериализация JSON
 	res, err := json.Marshal(respTask)
 	if err != nil {
-		log.Println("{\"error\":\"ошибка сериализации JSON\"}", err.Error())
-		return []byte("{\"error\":\"ошибка сериализации JSON\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	return res
@@ -111,32 +101,29 @@ func GetTaskById(r *http.Request) []byte {
 
 // Метод для завершения задачи
 func DoneTask(r *http.Request) []byte {
+	response := &db.Response{}
 	taskID := r.URL.Query().Get("id")
 
 	task, err := db.DbInstance.GetTaskByID(taskID)
 	if err != nil {
-		log.Println("{\"error\":\"Задача не найдена\"}", err.Error())
-		return []byte("{\"error\":\"Задача не найдена\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	if task.Repeat != "" {
 		task.Date, err = tasks.NextDateHandler(time.Now(), task.Date, task.Repeat)
 		if err != nil {
-			errStr := strings.Replace(err.Error(), "\"", "", -1)
-			return []byte("{\"error\":\"" + errStr + "\"}")
+			return response.LogResponseError(err.Error())
 		}
 		_, err = db.DbInstance.UpateTask(task)
 		if err != nil {
-			log.Println("{\"error\":\"Не удалось обновить запись в базе\"}", err.Error())
-			return []byte("{\"error\":\"Не удалось обновить запись в базе\"}")
+			return response.LogResponseError(err.Error())
 		}
 		return []byte("{}")
 	}
 
 	err = db.DbInstance.DeleteTask(task.Id)
 	if err != nil {
-		log.Println("{\"error\":\"Не удалось обновить запись в базе\"}", err.Error())
-		return []byte("{\"error\":\"Не удалось обновить запись в базе\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	return []byte("{}")

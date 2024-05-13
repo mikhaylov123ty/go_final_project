@@ -15,6 +15,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// Закрытие подключения
 	defer dbInstance.Connection.Close()
 
 	// Инициализация веб-сервера

@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -122,6 +123,8 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 		}
 		result = append(result, row)
 	}
+
+	fmt.Println(result == nil)
 
 	return result, nil
 }

@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"finalProject/internal/db"
@@ -11,43 +10,30 @@ import (
 // Метод для запроса всех задач
 func GetAllTasks() []byte {
 	var err error
-	newResponse := &db.Response{}
+	response := &db.Response{}
 
 	// Выполнение запроса к базе
-	newResponse.Tasks, err = db.DbInstance.GetAllTasks()
+	response.Tasks, err = db.DbInstance.GetAllTasks()
 	if err != nil {
-		log.Println("{\"error\":\"ошибка запроса в базу\"}", err.Error())
-		return []byte("{\"error\":\"ошибка запроса в базу\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	// Сериализация JSON
-	res, err := json.Marshal(newResponse)
-	if err != nil {
-		log.Println("{\"error\":\"ошибка сериализации JSON\"}", err.Error())
-		return []byte("{\"error\":\"ошибка сериализации JSON\"}")
-	}
-
-	return res
+	return response.Marshal()
 }
 
 // Метод для поиска задачи
 func GetTasksBySearch(r *http.Request) []byte {
 	var err error
-	newResponse := &db.Response{}
+	response := &db.Response{}
 
 	// Выполнение запроса к базе
-	newResponse.Tasks, err = db.DbInstance.GetTaskBySearch(r.URL.Query().Get("search"))
+	response.Tasks, err = db.DbInstance.GetTaskBySearch(r.URL.Query().Get("search"))
+	fmt.Println(len(response.Tasks))
 	if err != nil {
-		log.Println("{\"error\":\"ошибка запроса в базу\"}", err.Error())
-		return []byte("{\"error\":\"ошибка запроса в базу\"}")
+		return response.LogResponseError(err.Error())
 	}
 
 	// Сериализация JSON
-	res, err := json.Marshal(newResponse)
-	if err != nil {
-		log.Println("{\"error\":\"ошибка сериализации JSON\"}", err.Error())
-		return []byte("{\"error\":\"ошибка сериализации JSON\"}")
-	}
-
-	return res
+	return response.Marshal()
 }

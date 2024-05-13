@@ -13,76 +13,82 @@ import (
 
 // Основной обработчик для ручки api/task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	// Распределение допустимых запросов
 	switch {
 
 	// Запрос POST, создание задачи
 	case r.Method == "POST":
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.AddTask(r))
 
 	// Запрос PUT, изменение задачи
 	case r.Method == "PUT":
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.ChangeTask(r))
 
 	// Запрос DELETE, удаление задачи
 	case r.Method == "DELETE":
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.DeleteTaskById(r))
 
 	// Запрос по id задачи
 	case r.URL.Query().Has("id") == true:
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.GetTaskById(r))
 
 	// По умолчанию возвращает статус с ошибкой
 	default:
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
-
 	}
 }
 
 // Основной обработчик для ручки api/tasks
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
 	// Распределение допустимых запросов
 	switch r.URL.Query().Has("search") {
 
 	// Запрос с текстом в поле search
 	case true:
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.GetTasksBySearch(r))
 
 	// По умолчанию возвращает все задачи
 	default:
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.GetAllTasks())
 	}
 }
 
-// Основной обработчик для ручки api/tasks
+// Основной обработчик для ручки api/task
 func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	// Распределение допустимых запросов
 	switch {
+
+	// Запрос POST, завершение задачи
 	case r.Method == "POST":
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.DoneTask(r))
 
 		// По умолчанию возвращает статус с ошибкой
 	default:
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
-
 	}
 }
 
 // Основной обработчик для ручки api/sign
 func SignHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Установка типа контента json для ответа на запросы
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	// Распределение допустимых запросов
 	switch {
+
+	// Запрос POST, проверка пароля и формирование токена
 	case r.Method == "POST":
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(handlers.Signin(r))
+
+	default:
+		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
 	}
 }
 
