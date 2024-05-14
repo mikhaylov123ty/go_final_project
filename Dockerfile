@@ -18,8 +18,12 @@ WORKDIR /app
 COPY --from=gobuild /app/TODO ./TODO
 COPY --from=gobuild /app/web ./web
 
+EXPOSE 7540
+
+ENV TODO_DBFILE=scheduler.db TODO_PASSWORD=@WSX2wsx TODO_PORT=7540
+
 ENTRYPOINT ["./TODO"]
 
-#EXPOSE 7540
+
 #docker build -t todo_app:v1 .
-#docker run -p 7540:7540 --env-file /Users/amikhaylov/Downloads/.env -it todo_app:v1
+#docker run -P --rm todo_app:v1

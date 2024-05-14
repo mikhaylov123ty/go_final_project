@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -95,13 +95,13 @@ func NextDate(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	now, err := time.Parse("20060102", values.Get("now"))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
 	res, err := tasks.NextDateHandler(now, values.Get("date"), values.Get("repeat"))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	w.Write([]byte(res))
