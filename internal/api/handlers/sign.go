@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -36,12 +38,16 @@ func Signin(r *http.Request) []byte {
 	}
 
 	// Формирование токена
-	token := jwt.New(jwt.SigningMethodHS256)
+	h := hashPass(request.Password)
+	claims := &jwt.MapClaims{"passSHA256": h}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	response.Token, err = token.SignedString([]byte(request.Password))
+
 	if err != nil {
 		return response.LogResponseError(err.Error())
 	}
-	
+
 	// Сериализация JSON
 	return response.Marshal()
 }
@@ -62,7 +68,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			}
 
 			// Парсинг токена
-			parse, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+			token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
 				return []byte(os.Getenv("TODO_PASSWORD")), nil
 			})
 			if err != nil {
@@ -71,8 +77,25 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 
+			// Парсинг хеша
+			h := hashPass(os.Getenv("TODO_PASSWORD"))
+			sha := base64.StdEncoding.EncodeToString(h)
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				log.Println("Error parse hash", err)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				return
+			}
+
+			// Проверка хеша пароля в токене с хешем пароля из переменной окружения
+			if sha != claims["passSHA256"] {
+				log.Println("Token pass and system pass hashes not match")
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				return
+			}
+
 			// Проверка на валидность токена
-			if !parse.Valid {
+			if !token.Valid {
 				log.Println("Token is invalid")
 				http.Error(w, "Token is invalid", http.StatusUnauthorized)
 				return
@@ -82,4 +105,12 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		// Запуск следующей обработки
 		next(w, r)
 	})
+}
+
+// Метод для шифрования пароля
+func hashPass(pass string) []byte {
+	h := sha256.New()
+	h.Write([]byte(pass))
+
+	return h.Sum(nil)
 }
