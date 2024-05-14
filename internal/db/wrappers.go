@@ -28,6 +28,7 @@ func (r *Response) LogResponseError(s string) []byte {
 	return r.Marshal()
 }
 
+// Метод для проверки задачи
 func (t *Task) CheckTask(r *http.Request) *Response {
 	response := &Response{}
 	// Десериализация JSON
