@@ -15,12 +15,11 @@ const (
 
 // Структура для модификатора повторений
 type repeater struct {
-	modifier string // модификатор повторения d, y, w, m
-	//value    [2][]int // значения модификаторов повторения
-	days   []int
-	months []int
-	date   time.Time // дата задачи
-	now    time.Time // текущая дата
+	modifier string    // модификатор повторения d, y, w, m
+	days     []int     // значение модификатора дни
+	months   []int     // значение модификатора месяцы
+	date     time.Time // дата задачи
+	now      time.Time // текущая дата
 }
 
 // Основной обработчик для поиска следующей даты повторений
@@ -51,16 +50,12 @@ func NextDateHandler(now time.Time, date string, repeat string) (string, error) 
 
 // Метод для парсинга правил повторения
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
-	//var repeatVal [2][]int
 	var repeatDays []int
 	var repeatMonths []int
-	var negativeVal []int
 	var err error
 
 	// Парсинг строки с условием повторения
 	repeatStr := strings.Split(repeat, " ")
-
-	fmt.Println(repeatStr)
 
 	// Обработка входных данных, если найдены значения у модификаторов повторения
 	if len(repeatStr) > 1 {
@@ -86,10 +81,6 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 			if repeatStr[0] == "w" && val > 7 {
 				return nil, errors.New(returnError)
 			}
-			if val < 0 {
-				negativeVal = append(negativeVal, val)
-				continue
-			}
 			repeatDays = append(repeatDays, val)
 		}
 
@@ -103,15 +94,6 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 				repeatMonths = append(repeatMonths, val)
 			}
 		}
-
-		// Сортировка массива, для вывода упорядоченных дат проведения задачи
-		sort.Ints(repeatDays)
-		sort.Ints(repeatMonths)
-
-		// Добавление в конце к массиву отсортированных отрицательных значений
-		// в любых сценариях они указывают на предпоследний и последний дни месяца
-		sort.Ints(negativeVal)
-		repeatDays = append(repeatDays, negativeVal...)
 
 		// Обработка сценария, когда модификатору не требуется значение (смена года)
 	} else if repeatStr[0] == "y" {
@@ -213,9 +195,10 @@ func (r *repeater) moveMonths() {
 	// Составление всех возможных базовых пар дня и месяца
 	// Выходной список в отсортированном порядке
 	baseDates = createDatesSlice(r.now.Year(), r.days, r.months)
-
+	fmt.Println(r.days, r.months)
 	i := 1
 	for {
+		fmt.Println(baseDates)
 		for range len(baseDates) {
 			if r.date.Before(baseDates[0]) {
 				r.date = baseDates[0]
@@ -229,8 +212,20 @@ func (r *repeater) moveMonths() {
 
 }
 
+type timeSlice []time.Time
+
+func (s timeSlice) Less(i, j int) bool {
+	return s[i].Before(s[j])
+}
+func (s timeSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s timeSlice) Len() int {
+	return len(s)
+}
+
 func createDatesSlice(year int, days []int, months []int) []time.Time {
-	var dates = make([]time.Time, 0)
+	var dates timeSlice = []time.Time{}
 	for _, month := range months {
 		for _, day := range days {
 			m := month
@@ -242,5 +237,7 @@ func createDatesSlice(year int, days []int, months []int) []time.Time {
 			dates = append(dates, parseTime)
 		}
 	}
+
+	sort.Sort(dates)
 	return dates
 }

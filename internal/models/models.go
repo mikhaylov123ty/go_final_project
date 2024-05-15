@@ -1,16 +1,16 @@
-package db
+package models
 
 // Константы для создания таблицы и индексов
 const (
-	createTableQuery = `CREATE TABLE scheduler (
+	CreateTableQuery = `CREATE TABLE scheduler (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		date INTEGER NOT NULL,
 		title TEXT NOT NULL,
 		comment TEXT,
 		repeat TEXT(128)
 		);`
-	createIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
-	createDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
+	CreateIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
+	CreateDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
 )
 
 // Структура для задач

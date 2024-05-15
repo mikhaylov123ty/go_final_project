@@ -4,12 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"finalProject/internal/models"
 	"io"
 	"log"
 	"net/http"
 	"os"
-
-	"finalProject/internal/db"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -17,8 +16,8 @@ import (
 // Метод для аутентификации в сервис с помощью пароля
 func Signin(r *http.Request) []byte {
 
-	response := &db.Response{}
-	request := &db.Request{}
+	response := &models.Response{}
+	request := &models.Request{}
 
 	// Чтение тела запроса
 	body, err := io.ReadAll(r.Body)

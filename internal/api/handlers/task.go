@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"finalProject/internal/models"
 	"log"
 	"net/http"
 	"time"
@@ -13,7 +14,7 @@ import (
 // Метод для добавления задачи в базу
 func AddTask(r *http.Request) []byte {
 	var err error
-	newTask := &db.Task{}
+	newTask := &models.Task{}
 
 	// Проверка вводных данных задачи
 	response := newTask.CheckTask(r)
@@ -34,7 +35,7 @@ func AddTask(r *http.Request) []byte {
 // Метод для изменения задачи
 func ChangeTask(r *http.Request) []byte {
 	var err error
-	modifiedTask := &db.Task{}
+	modifiedTask := &models.Task{}
 
 	// Проверка вводных данных задачи
 	response := modifiedTask.CheckTask(r)
@@ -61,7 +62,7 @@ func ChangeTask(r *http.Request) []byte {
 // Метод для удаления задачи
 func DeleteTaskById(r *http.Request) []byte {
 	taskID := r.URL.Query().Get("id")
-	response := &db.Response{}
+	response := &models.Response{}
 
 	// Проверка существования задачи по id в БД
 	task, err := db.DbInstance.GetTaskByID(taskID)
@@ -80,7 +81,7 @@ func DeleteTaskById(r *http.Request) []byte {
 
 // Метод для запроса задачи по id
 func GetTaskById(r *http.Request) []byte {
-	response := &db.Response{}
+	response := &models.Response{}
 
 	// Проверка аргумента id в ссылке
 	id := r.URL.Query().Get("id")
@@ -105,7 +106,7 @@ func GetTaskById(r *http.Request) []byte {
 
 // Метод для завершения задачи
 func DoneTask(r *http.Request) []byte {
-	response := &db.Response{}
+	response := &models.Response{}
 	taskID := r.URL.Query().Get("id")
 
 	// Проверка существования задачи по id в БД

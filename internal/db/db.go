@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"finalProject/internal/models"
 	"log"
 	"os"
 	"time"
@@ -31,17 +32,17 @@ func Init(file string) (*dbInstance, error) {
 
 	// Проверка наличия файла с базой данных
 	if checkFile() {
-		_, err = db.Exec(createTableQuery)
+		_, err = db.Exec(models.CreateTableQuery)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec(createIdIndex)
+		_, err = db.Exec(models.CreateIdIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec(createDateIndex)
+		_, err = db.Exec(models.CreateDateIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +76,7 @@ func checkFile() bool {
 }
 
 // Метод для запроса в БД и вывода всех задач
-func (db *dbInstance) GetAllTasks() ([]*Task, error) {
+func (db *dbInstance) GetAllTasks() ([]*models.Task, error) {
 
 	// Выполнение запроса к базе
 	res, err := db.Connection.Query(
@@ -88,9 +89,9 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 	defer res.Close()
 
 	// Упаковка результатов в слайс адресов задач
-	result := []*Task{}
+	result := []*models.Task{}
 	for res.Next() {
-		row := &Task{}
+		row := &models.Task{}
 		err = res.Scan(&row.Id, &row.Date, &row.Title, &row.Comment, &row.Repeat)
 		if err != nil {
 			return nil, err
@@ -103,7 +104,7 @@ func (db *dbInstance) GetAllTasks() ([]*Task, error) {
 
 // Метод для поиска задач в БД
 // search - текст, который вводится в поисковую строку
-func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
+func (db *dbInstance) GetTaskBySearch(search string) ([]*models.Task, error) {
 
 	// Парсинг вероятной даты
 	possibleDate, err := time.Parse("02.01.2006", search)
@@ -126,9 +127,9 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 	defer res.Close()
 
 	// Упаковка результата в слайс адресов задач
-	result := []*Task{}
+	result := []*models.Task{}
 	for res.Next() {
-		row := &Task{}
+		row := &models.Task{}
 		err = res.Scan(&row.Id, &row.Date, &row.Title, &row.Comment, &row.Repeat)
 		if err != nil {
 			return nil, err
@@ -141,9 +142,9 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*Task, error) {
 
 // Метод для поиска задачи в БД по id
 // id - идентификатор задачи
-func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
+func (db *dbInstance) GetTaskByID(id string) (*models.Task, error) {
 
-	res := &Task{}
+	res := &models.Task{}
 
 	// Выполнение запроса к базе
 	row := db.Connection.QueryRow(
@@ -162,7 +163,7 @@ func (db *dbInstance) GetTaskByID(id string) (*Task, error) {
 
 // Метод для добавления задачи в БД
 // t - адрес экземпляра структуры Task из models
-func (db *dbInstance) AddTask(t *Task) (int, error) {
+func (db *dbInstance) AddTask(t *models.Task) (int, error) {
 
 	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
@@ -188,7 +189,7 @@ func (db *dbInstance) AddTask(t *Task) (int, error) {
 
 // Метод для обновления задачи в БД
 // t - адрес экземпляра структуры Task из models
-func (db *dbInstance) UpateTask(t *Task) (int, error) {
+func (db *dbInstance) UpateTask(t *models.Task) (int, error) {
 
 	// Выполнение запроса к базе
 	exec, err := db.Connection.Exec(
