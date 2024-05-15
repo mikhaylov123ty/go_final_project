@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -48,6 +47,7 @@ func NextDateHandler(now time.Time, date string, repeat string) (string, error) 
 	return r.date.Format("20060102"), nil
 }
 
+// TODO рассмотреть возможность брать предыдущий слайс с датами и использовать его как базу и дополнить описания
 // Метод для парсинга правил повторения
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
 	var repeatDays []int
@@ -195,10 +195,8 @@ func (r *repeater) moveMonths() {
 	// Составление всех возможных базовых пар дня и месяца
 	// Выходной список в отсортированном порядке
 	baseDates = createDatesSlice(r.now.Year(), r.days, r.months)
-	fmt.Println(r.days, r.months)
 	i := 1
 	for {
-		fmt.Println(baseDates)
 		for range len(baseDates) {
 			if r.date.Before(baseDates[0]) {
 				r.date = baseDates[0]
@@ -226,6 +224,7 @@ func (s timeSlice) Len() int {
 
 func createDatesSlice(year int, days []int, months []int) []time.Time {
 	var dates timeSlice = []time.Time{}
+
 	for _, month := range months {
 		for _, day := range days {
 			m := month
@@ -239,5 +238,6 @@ func createDatesSlice(year int, days []int, months []int) []time.Time {
 	}
 
 	sort.Sort(dates)
+
 	return dates
 }
