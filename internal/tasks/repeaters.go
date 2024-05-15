@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,12 +13,14 @@ const (
 	returnError = "правило повторения указано в неправильном формате"
 )
 
-// структура для модификатора повторений
+// Структура для модификатора повторений
 type repeater struct {
-	modifier string    // модификатор повторения d, y, w, m
-	value    [2][]int  // значения модификаторов повторения
-	date     time.Time // дата задачи
-	now      time.Time // текущая дата
+	modifier string // модификатор повторения d, y, w, m
+	//value    [2][]int // значения модификаторов повторения
+	days   []int
+	months []int
+	date   time.Time // дата задачи
+	now    time.Time // текущая дата
 }
 
 // Основной обработчик для поиска следующей даты повторений
@@ -46,59 +49,73 @@ func NextDateHandler(now time.Time, date string, repeat string) (string, error) 
 	return r.date.Format("20060102"), nil
 }
 
-// TODO change here to pointers, no need to throw shadowed strings
+// Метод для парсинга правил повторения
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
-	var repeatVal [2][]int
+	//var repeatVal [2][]int
+	var repeatDays []int
+	var repeatMonths []int
 	var negativeVal []int
 	var err error
 
 	// Парсинг строки с условием повторения
 	repeatStr := strings.Split(repeat, " ")
 
+	fmt.Println(repeatStr)
+
 	// Обработка входных данных, если найдены значения у модификаторов повторения
 	if len(repeatStr) > 1 {
-		for i := 1; i < len(repeatStr); i++ {
-			repeatStrVal := strings.Split(repeatStr[i], ",")
-			if repeatStrVal[0] == "x" {
-				return nil, errors.New(returnError)
 
+		repeatDaysVal := strings.Split(repeatStr[1], ",")
+
+		if repeatDaysVal[0] == "x" {
+			return nil, errors.New(returnError)
+		}
+
+		// Проверка каждого из значений условия повторения и исключение аномалий
+		for _, v := range repeatDaysVal {
+			val, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
 			}
-			// Проверка каждого из значений условия повторения
-			for _, v := range repeatStrVal {
+			if repeatStr[0] == "d" && val > 400 {
+				return nil, errors.New(returnError)
+			}
+			if repeatStr[0] == "m" && (val <= -3 || val > 31) {
+				return nil, errors.New(returnError)
+			}
+			if repeatStr[0] == "w" && val > 7 {
+				return nil, errors.New(returnError)
+			}
+			if val < 0 {
+				negativeVal = append(negativeVal, val)
+				continue
+			}
+			repeatDays = append(repeatDays, val)
+		}
+
+		if len(repeatStr) > 2 {
+			repeatMonthsVal := strings.Split(repeatStr[2], ",")
+			for _, v := range repeatMonthsVal {
 				val, err := strconv.Atoi(v)
 				if err != nil {
 					return nil, err
 				}
-				if repeatStr[0] == "d" && val > 400 {
-					return nil, errors.New(returnError)
-				}
-				if repeatStr[0] == "m" && (val <= -3 || val > 31) {
-					return nil, errors.New(returnError)
-				}
-				if repeatStr[0] == "w" && val > 7 {
-					return nil, errors.New(returnError)
-				}
-				if val < 0 {
-					negativeVal = append(negativeVal, val)
-					continue
-				}
-				repeatVal[i-1] = append(repeatVal[i-1], val)
+				repeatMonths = append(repeatMonths, val)
 			}
 		}
 
 		// Сортировка массива, для вывода упорядоченных дат проведения задачи
-		for _, v := range repeatVal {
-			sort.Ints(v)
-		}
+		sort.Ints(repeatDays)
+		sort.Ints(repeatMonths)
 
 		// Добавление в конце к массиву отсортированных отрицательных значений
 		// в любых сценариях они указывают на предпоследний и последний дни месяца
 		sort.Ints(negativeVal)
-		repeatVal[0] = append(repeatVal[0], negativeVal...)
+		repeatDays = append(repeatDays, negativeVal...)
 
 		// Обработка сценария, когда модификатору не требуется значение (смена года)
 	} else if repeatStr[0] == "y" {
-		repeatVal[0] = append(repeatVal[0], 1)
+		repeatDays = append(repeatDays, 1)
 
 		// Возврат ошибки, если указан неверный формат
 	} else {
@@ -107,21 +124,21 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 
 	// Обработка условия, если выбран модификатор повторения месяц
 	// без указания конкретных месяцев
-	if len(repeatVal[1]) == 0 && repeatStr[0] == "m" {
+	if len(repeatMonths) == 0 && repeatStr[0] == "m" {
 
 		// Если указано 31е число, то добавляем только те месяцы, где 31 день
-		if repeatVal[0][0] == 31 {
-			repeatVal[1] = append(repeatVal[1], 1, 3, 5, 7, 8, 10, 12)
-		}
-
-		// В остальных случаях добавляем все 12 месцев
-		for i := 1; i <= 12; i++ {
-			repeatVal[1] = append(repeatVal[1], i)
+		if repeatDays[0] == 31 {
+			repeatMonths = append(repeatMonths, 1, 3, 5, 7, 8, 10, 12)
+		} else {
+			// В остальных случаях добавляем все 12 месцев
+			for i := 1; i <= 12; i++ {
+				repeatMonths = append(repeatMonths, i)
+			}
 		}
 	}
 
 	// Заполняем обработанными данными экземпляр повторения
-	r := &repeater{modifier: repeatStr[0], value: repeatVal, now: now}
+	r := &repeater{modifier: repeatStr[0], days: repeatDays, months: repeatMonths, now: now}
 	r.date, err = time.Parse("20060102", date)
 	if err != nil {
 		return nil, err
@@ -132,27 +149,31 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 
 // Метод поиска следующей даты проведения в сценарии с днями
 func (r *repeater) moveDays() {
+
 	// Если текущая дата меньше даты проведения, добавляем дни к дате проведения
 	if r.now.Before(r.date) {
-		r.date = r.date.AddDate(0, 0, r.value[0][0])
-	} else {
-		// В противном случае добавляем дни, пока дата проведения не станет больше текущей
-		for r.date.Before(r.now) {
-			r.date = r.date.AddDate(0, 0, r.value[0][0])
-		}
+		r.date = r.date.AddDate(0, 0, r.days[0])
+		return
+	}
+
+	// В противном случае добавляем дни, пока дата проведения не станет больше текущей
+	for r.date.Before(r.now) {
+		r.date = r.date.AddDate(0, 0, r.days[0])
 	}
 }
 
 // Метод поиска следующей даты проведения в сценарии с годами
 func (r *repeater) moveYears() {
+
 	// Если текущая дата меньше даты проведения, добавляем года к дате проведения
 	if r.now.Before(r.date) {
-		r.date = r.date.AddDate(r.value[0][0], 0, 0)
-	} else {
-		// В противном случае добавляем года, пока дата проведения не станет больше текущей
-		for r.date.Before(r.now) {
-			r.date = r.date.AddDate(r.value[0][0], 0, 0)
-		}
+		r.date = r.date.AddDate(r.days[0], 0, 0)
+		return
+	}
+
+	// В противном случае добавляем года, пока дата проведения не станет больше текущей
+	for r.date.Before(r.now) {
+		r.date = r.date.AddDate(r.days[0], 0, 0)
 	}
 }
 
@@ -160,7 +181,7 @@ func (r *repeater) moveYears() {
 func (r *repeater) moveWeeks() {
 	var weekDays string
 	// Для каждого из значений дня недели, формируем строку с названиями этих дней
-	for _, weekDay := range r.value[0] {
+	for _, weekDay := range r.days {
 		if weekDay == 7 {
 			weekDay = 0
 		}
@@ -181,49 +202,45 @@ func (r *repeater) moveWeeks() {
 
 // Метод поиска следующей даты проведения в сценарии с месяцами
 func (r *repeater) moveMonths() {
-	var dates = make([]time.Time, 0)
-	var newDate time.Time
+	var baseDates = make([]time.Time, 0)
+	//var newDate time.Time
 
 	// Если дата проведения меньше текущей даты, устанавливаем дату проведения на текущую дату
 	if r.date.Before(r.now) {
 		r.date = r.now
 	}
 
-	// Составление всех возможных пар дня и месяца
+	// Составление всех возможных базовых пар дня и месяца
 	// Выходной список в отсортированном порядке
-	for _, month := range r.value[1] {
-		for _, day := range r.value[0] {
+	baseDates = createDatesSlice(r.now.Year(), r.days, r.months)
+
+	i := 1
+	for {
+		for range len(baseDates) {
+			if r.date.Before(baseDates[0]) {
+				r.date = baseDates[0]
+				return
+			}
+			baseDates = baseDates[1:]
+		}
+		baseDates = createDatesSlice(r.now.Year()+i, r.days, r.months)
+		i++
+	}
+
+}
+
+func createDatesSlice(year int, days []int, months []int) []time.Time {
+	var dates = make([]time.Time, 0)
+	for _, month := range months {
+		for _, day := range days {
 			m := month
 			if day < 0 {
-				m++
 				day++
+				m++
 			}
-			parseTime := time.Date(r.now.Year(), time.Month(m), day, 0, 0, 0, 0, time.UTC)
+			parseTime := time.Date(year, time.Month(m), day, 0, 0, 0, 0, time.UTC)
 			dates = append(dates, parseTime)
 		}
 	}
-
-	// Проверка возможных дат проведения
-	for len(dates) > 0 {
-
-		// Если текущая дата проведения меньше, то устанавливается ближайшая дата
-		if r.date.Before(dates[0]) {
-			r.date = dates[0]
-			return
-		} else {
-			// Обработка кейсов с високосными годами
-			if dates[0].Year()%4 == 0 {
-				newDate = dates[0].AddDate(1, 0, -1)
-			} else if dates[0].AddDate(1, 0, 0).Year()%4 == 0 {
-				newDate = dates[0].AddDate(1, 0, +1)
-			} else {
-				// Если текущая дата проведения больше, добавляем к ближайшей дате год
-				newDate = dates[0].AddDate(1, 0, 0)
-			}
-
-			// Исключаем ближайшую дату из слайса и добавляем в конец эту же дату на следующий год
-			dates = dates[1:]
-			dates = append(dates, newDate)
-		}
-	}
+	return dates
 }

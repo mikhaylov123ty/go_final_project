@@ -17,6 +17,11 @@ func GetAllTasks() []byte {
 		return response.LogResponseError(err.Error())
 	}
 
+	// Проверка на пустой слайс. Сериализация его не обрабатывает, т.к. установлен omitempty для этого поля
+	if len(response.Tasks) == 0 {
+		return []byte("{\"tasks\":[]}")
+	}
+
 	// Сериализация JSON
 	return response.Marshal()
 }
