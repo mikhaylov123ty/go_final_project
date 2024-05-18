@@ -112,7 +112,7 @@ func parseRepeater(now time.Time, date string, repeat string) (*repeater, error)
 		if repeatDays[0] == 31 {
 			repeatMonths = append(repeatMonths, 1, 3, 5, 7, 8, 10, 12)
 		} else {
-			// В остальных случаях добавляем все 12 месцев
+			// В остальных случаях добавляем все 12 месяцев
 			for i := 1; i <= 12; i++ {
 				repeatMonths = append(repeatMonths, i)
 			}
@@ -185,7 +185,6 @@ func (r *repeater) moveWeeks() {
 // Метод поиска следующей даты проведения в сценарии с месяцами
 func (r *repeater) moveMonths() {
 	var baseDates = make([]time.Time, 0)
-	//var newDate time.Time
 
 	// Если дата проведения меньше текущей даты, устанавливаем дату проведения на текущую дату
 	if r.date.Before(r.now) {

@@ -4,13 +4,18 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"finalProject/internal/models"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
+	"finalProject/internal/models"
+
 	"github.com/golang-jwt/jwt/v5"
+)
+
+const (
+	authenticationRequired = "Authentication required"
 )
 
 // Метод для аутентификации в сервис с помощью пароля
@@ -62,17 +67,17 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			cookie, err := r.Cookie("token")
 			if err != nil {
 				log.Println("No cookie found", err)
-				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				http.Error(w, authenticationRequired, http.StatusUnauthorized)
 				return
 			}
 
-			// Парсинг токена
+			// Верификация токена с ключом подписи - паролем
 			token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
 				return []byte(os.Getenv("TODO_PASSWORD")), nil
 			})
 			if err != nil {
 				log.Println("Error parse token", err)
-				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				http.Error(w, authenticationRequired, http.StatusUnauthorized)
 				return
 			}
 
@@ -81,22 +86,22 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			sha := base64.StdEncoding.EncodeToString(h)
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				log.Println("Error parse hash", err)
-				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				log.Println("Error decode claims", err)
+				http.Error(w, authenticationRequired, http.StatusUnauthorized)
 				return
 			}
 
-			// Проверка хеша пароля в токене с хешем пароля из переменной окружения
+			// Дополнительная проверка хеша пароля в claims токена с хешем пароля из переменной окружения
 			if sha != claims["passSHA256"] {
 				log.Println("Token pass and system pass hashes not match")
-				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				http.Error(w, authenticationRequired, http.StatusUnauthorized)
 				return
 			}
 
-			// Проверка на валидность токена
+			// Основная проверка на валидность токена
 			if !token.Valid {
 				log.Println("Token is invalid")
-				http.Error(w, "Token is invalid", http.StatusUnauthorized)
+				http.Error(w, authenticationRequired, http.StatusUnauthorized)
 				return
 			}
 		}

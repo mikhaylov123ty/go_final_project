@@ -2,10 +2,11 @@ package db
 
 import (
 	"database/sql"
-	"finalProject/internal/models"
 	"log"
 	"os"
 	"time"
+
+	"finalProject/internal/models"
 
 	_ "modernc.org/sqlite"
 )

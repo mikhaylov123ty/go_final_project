@@ -11,7 +11,7 @@ ENV CGO_EBABLED=0 GOOS=linux GOARCH=amd64
 
 RUN go build -o ./TODO ./cmd/
 
-#Передаем собраный билд в "легкий" alpine и собираем в нем
+#Передаем собраный билд в "легкий" и с меньшими уязвимостями alpine и собираем в нем
 FROM alpine
 
 WORKDIR /app
