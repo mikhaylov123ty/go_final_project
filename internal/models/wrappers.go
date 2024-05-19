@@ -13,6 +13,7 @@ import (
 
 const (
 	authenticationRequired = "Authentication required"
+	IncorrectRequest       = "Не корректный запрос"
 )
 
 // Метод для сериализации ответов

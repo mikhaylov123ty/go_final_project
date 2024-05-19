@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"finalProject/internal/api/handlers"
+	"finalProject/internal/models"
 	"finalProject/internal/tasks"
 )
 
@@ -34,7 +35,8 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	// По умолчанию возвращает статус с ошибкой
 	default:
-		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
+		resp := models.Response{Error: models.IncorrectRequest}
+		w.Write(resp.Marshal())
 	}
 }
 
@@ -68,7 +70,8 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 		// По умолчанию возвращает статус с ошибкой
 	default:
-		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
+		resp := models.Response{Error: models.IncorrectRequest}
+		w.Write(resp.Marshal())
 	}
 }
 
@@ -86,7 +89,8 @@ func SignHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(handlers.Signin(r))
 
 	default:
-		w.Write([]byte("{\"error\":\"Не корректный запрос\"}"))
+		resp := models.Response{Error: models.IncorrectRequest}
+		w.Write(resp.Marshal())
 	}
 }
 
