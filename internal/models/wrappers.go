@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,6 +9,10 @@ import (
 	"time"
 
 	"finalProject/internal/tasks"
+)
+
+const (
+	authenticationRequired = "Authentication required"
 )
 
 // Метод для сериализации ответов
@@ -26,6 +31,12 @@ func (r *Response) LogResponseError(s string) []byte {
 	log.Println(r.Error)
 
 	return r.Marshal()
+}
+
+// Метод для логирования ошибок авторизации
+func LogAuthError(s string, e error, w http.ResponseWriter) {
+	log.Println(s, e.Error())
+	http.Error(w, authenticationRequired, http.StatusUnauthorized)
 }
 
 // Метод для проверки задачи
@@ -78,4 +89,15 @@ func (t *Task) CheckTask(r *http.Request) *Response {
 	}
 
 	return response
+}
+
+// Метод для шифрования пароля
+func HashPass(pass string) ([]byte, error) {
+	h := sha256.New()
+	_, err := h.Write([]byte(pass))
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
 }

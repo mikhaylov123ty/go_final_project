@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -14,11 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const (
-	authenticationRequired = "Authentication required"
-)
-
-// Метод для аутентификации в сервис с помощью пароля
+// Метод для аутентификации в сервисе с помощью пароля
 func Signin(r *http.Request) []byte {
 
 	response := &models.Response{}
@@ -41,13 +35,16 @@ func Signin(r *http.Request) []byte {
 		return response.LogResponseError("Неверный пароль")
 	}
 
-	// Формирование токена
-	h := hashPass(request.Password)
+	// Создание хеша пароля и добавление в claims часть токена
+	h, err := models.HashPass(request.Password)
+	if err != nil {
+		return response.LogResponseError(err.Error())
+	}
 	claims := &jwt.MapClaims{"passSHA256": h}
 
+	// Формирование и подпись токена
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	response.Token, err = token.SignedString([]byte(request.Password))
-
 	if err != nil {
 		return response.LogResponseError(err.Error())
 	}
@@ -66,8 +63,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			// Проверка куки
 			cookie, err := r.Cookie("token")
 			if err != nil {
-				log.Println("No cookie found", err)
-				http.Error(w, authenticationRequired, http.StatusUnauthorized)
+				models.LogAuthError("No cookie found:", err, w)
 				return
 			}
 
@@ -76,32 +72,32 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 				return []byte(os.Getenv("TODO_PASSWORD")), nil
 			})
 			if err != nil {
-				log.Println("Error parse token", err)
-				http.Error(w, authenticationRequired, http.StatusUnauthorized)
+				models.LogAuthError("Error parse token:", err, w)
 				return
 			}
 
 			// Парсинг хеша
-			h := hashPass(os.Getenv("TODO_PASSWORD"))
+			h, err := models.HashPass(os.Getenv("TODO_PASSWORD"))
+			if err != nil {
+				models.LogAuthError("Error hash password:", err, w)
+				return
+			}
 			sha := base64.StdEncoding.EncodeToString(h)
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				log.Println("Error decode claims", err)
-				http.Error(w, authenticationRequired, http.StatusUnauthorized)
+				models.LogAuthError("Error decode claims", err, w)
 				return
 			}
 
 			// Дополнительная проверка хеша пароля в claims токена с хешем пароля из переменной окружения
 			if sha != claims["passSHA256"] {
-				log.Println("Token pass and system pass hashes not match")
-				http.Error(w, authenticationRequired, http.StatusUnauthorized)
+				models.LogAuthError("Token pass and system pass hashes not match:", err, w)
 				return
 			}
 
 			// Основная проверка на валидность токена
 			if !token.Valid {
-				log.Println("Token is invalid")
-				http.Error(w, authenticationRequired, http.StatusUnauthorized)
+				models.LogAuthError("Token is invalid:", err, w)
 				return
 			}
 		}
@@ -109,12 +105,4 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		// Запуск следующей обработки
 		next(w, r)
 	})
-}
-
-// Метод для шифрования пароля
-func hashPass(pass string) []byte {
-	h := sha256.New()
-	h.Write([]byte(pass))
-
-	return h.Sum(nil)
 }
