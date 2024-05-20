@@ -11,11 +11,6 @@ import (
 	"finalProject/internal/tasks"
 )
 
-const (
-	authenticationRequired = "Authentication required"
-	IncorrectRequest       = "Не корректный запрос"
-)
-
 // Метод для сериализации ответов
 func (r *Response) Marshal() []byte {
 	res, err := json.Marshal(r)

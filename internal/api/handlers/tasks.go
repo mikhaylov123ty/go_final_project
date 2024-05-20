@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"finalProject/internal/models"
 	"net/http"
 
 	"finalProject/internal/db"
+	"finalProject/internal/models"
 )
 
 // Метод для запроса всех задач

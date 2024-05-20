@@ -11,6 +11,9 @@ const (
 		);`
 	CreateIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
 	CreateDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
+
+	authenticationRequired = "Authentication required"
+	IncorrectRequest       = "Не корректный запрос"
 )
 
 // Структура для задач
