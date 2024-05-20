@@ -47,7 +47,6 @@ func NextDateHandler(now time.Time, date string, repeat string) (string, error) 
 	return r.date.Format("20060102"), nil
 }
 
-// TODO рассмотреть возможность брать предыдущий слайс с датами и использовать его как базу и дополнить описания
 // Метод для парсинга правил повторения
 func parseRepeater(now time.Time, date string, repeat string) (*repeater, error) {
 	var repeatDays []int
