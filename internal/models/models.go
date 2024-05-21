@@ -9,6 +9,9 @@ const (
 		comment TEXT,
 		repeat TEXT(128)
 		);`
+
+	CheckTableExistence = `SELECT * FROM scheduler;`
+
 	CreateIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
 	CreateDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
 

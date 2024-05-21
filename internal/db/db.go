@@ -31,9 +31,10 @@ func Init(file string) (*dbInstance, error) {
 		return nil, err
 	}
 
-	// Проверка наличия файла с базой данных
-	if checkFile() {
-		_, err = db.Exec(models.CreateTableQuery)
+	// Проверка наличия таблицы в БД, создание в случае отсутствия
+	if checkDbTable(db) {
+		log.Println("Table scheduler not found, creating")
+		_, err := db.Exec(models.CreateTableQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -55,25 +56,28 @@ func Init(file string) (*dbInstance, error) {
 		return nil, err
 	}
 
+	// Логирование пути файла с БД
+	exec, _ := os.Executable()
+	log.Println("Database initialized, path:", exec+"/"+file)
+
 	// Передача инстанса в общую переменную
 	DbInstance = &dbInstance{Connection: db}
 
 	return DbInstance, nil
 }
 
-// Метод для проверки наличия файла БД
-func checkFile() bool {
+// Метод для проверки наличия таблицы в файле БД
+func checkDbTable(db *sql.DB) bool {
 
-	// Проверка файла по пути из переменной окружения
-	_, err := os.Stat(os.Getenv("TODO_DBFILE"))
-
-	// Установка флага
-	var install bool
-	if err != nil {
-		install = true
+	// Производится запрос в таблицу,
+	// ошибку тут нет смысла обрабатывать, нужно только количество строк
+	rows, _ := db.Query(models.CheckTableExistence)
+	if rows != nil {
+		defer rows.Close()
+		return false
 	}
 
-	return install
+	return true
 }
 
 // Метод для запроса в БД и вывода всех задач

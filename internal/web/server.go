@@ -23,6 +23,7 @@ func Init(port string) *server {
 // Запуск веб-сервера
 func (s *server) Start(webDir string) error {
 	log.Println("Starting server...")
+	log.Println("Server port:", s.port)
 
 	// Обработчик файлового сервера
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
