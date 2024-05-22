@@ -11,6 +11,19 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+const (
+	createTableQuery = `CREATE TABLE scheduler (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		date INTEGER NOT NULL,
+		title TEXT NOT NULL,
+		comment TEXT,
+		repeat TEXT(128)
+		);`
+
+	createIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
+	createDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
+)
+
 // Структура подключения к БД
 type dbInstance struct {
 	Connection *sql.DB
@@ -22,7 +35,6 @@ var DbInstance *dbInstance
 // Метод инициализации файла БД
 // file - путь к файлу с БД
 func Init(file string) (*dbInstance, error) {
-
 	log.Println("Initializing database")
 
 	// Открываем\создаем файл с базой данных
@@ -31,20 +43,20 @@ func Init(file string) (*dbInstance, error) {
 		return nil, err
 	}
 
-	// Проверка наличия таблицы в БД, создание в случае отсутствия
+	// Проверка наличия таблицы в БД, создание таблицы и индексов в случае отсутствия
 	if checkDbTable(db) {
 		log.Println("Table scheduler not found, creating")
-		_, err := db.Exec(models.CreateTableQuery)
+		_, err := db.Exec(createTableQuery)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec(models.CreateIdIndex)
+		_, err = db.Exec(createIdIndex)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = db.Exec(models.CreateDateIndex)
+		_, err = db.Exec(createDateIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -69,15 +81,24 @@ func Init(file string) (*dbInstance, error) {
 // Метод для проверки наличия таблицы в файле БД
 func checkDbTable(db *sql.DB) bool {
 
-	// Производится запрос в таблицу,
-	// ошибку тут нет смысла обрабатывать, нужно только количество строк
-	rows, _ := db.Query(models.CheckTableExistence)
-	if rows != nil {
-		defer rows.Close()
+	// Производится запрос в БД на наличи таблицы
+	rows, err := db.Query(`SELECT name 
+		FROM sqlite_master 
+		WHERE type='table' AND name='scheduler';`)
+
+	// Закрыть строки после проверки
+	defer rows.Close()
+	if err != nil {
+		log.Println(err)
 		return false
 	}
 
-	return true
+	//Если строки нет - необходимо создать таблицу
+	if !rows.Next() {
+		return true
+	}
+
+	return false
 }
 
 // Метод для запроса в БД и вывода всех задач
@@ -86,7 +107,7 @@ func (db *dbInstance) GetAllTasks() ([]*models.Task, error) {
 	// Выполнение запроса к базе
 	res, err := db.Connection.Query(
 		`SELECT * FROM scheduler
-         		ORDER BY date`,
+         		ORDER BY date;`,
 	)
 	if err != nil {
 		return nil, err
@@ -148,7 +169,6 @@ func (db *dbInstance) GetTaskBySearch(search string) ([]*models.Task, error) {
 // Метод для поиска задачи в БД по id
 // id - идентификатор задачи
 func (db *dbInstance) GetTaskByID(id string) (*models.Task, error) {
-
 	res := &models.Task{}
 
 	// Выполнение запроса к базе

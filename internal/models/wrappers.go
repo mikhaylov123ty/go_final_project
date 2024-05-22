@@ -11,6 +11,11 @@ import (
 	"finalProject/internal/tasks"
 )
 
+// Константы для создания таблицы и индексов
+const (
+	authenticationRequired = "Authentication required"
+)
+
 // Метод для сериализации ответов
 func (r *Response) Marshal() []byte {
 	res, err := json.Marshal(r)

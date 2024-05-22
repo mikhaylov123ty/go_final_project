@@ -10,6 +10,10 @@ import (
 	"finalProject/internal/tasks"
 )
 
+const (
+	incorrectRequest = "Не корректный запрос"
+)
+
 // Основной обработчик для ручки api/task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -29,13 +33,13 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case r.Method == "DELETE":
 		w.Write(handlers.DeleteTaskById(r))
 
-	// Запрос по id задачи
-	case r.URL.Query().Has("id") == true:
+	// Запрос GET по id задачи
+	case r.Method == "GET" && r.URL.Query().Has("id") == true:
 		w.Write(handlers.GetTaskById(r))
 
 	// По умолчанию возвращает статус с ошибкой
 	default:
-		resp := models.Response{Error: models.IncorrectRequest}
+		resp := models.Response{Error: incorrectRequest}
 		w.Write(resp.Marshal())
 	}
 }
@@ -70,7 +74,7 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 		// По умолчанию возвращает статус с ошибкой
 	default:
-		resp := models.Response{Error: models.IncorrectRequest}
+		resp := models.Response{Error: incorrectRequest}
 		w.Write(resp.Marshal())
 	}
 }
@@ -89,7 +93,7 @@ func SignHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(handlers.Signin(r))
 
 	default:
-		resp := models.Response{Error: models.IncorrectRequest}
+		resp := models.Response{Error: incorrectRequest}
 		w.Write(resp.Marshal())
 	}
 }

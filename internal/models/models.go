@@ -1,24 +1,5 @@
 package models
 
-// Константы для создания таблицы и индексов
-const (
-	CreateTableQuery = `CREATE TABLE scheduler (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		date INTEGER NOT NULL,
-		title TEXT NOT NULL,
-		comment TEXT,
-		repeat TEXT(128)
-		);`
-
-	CheckTableExistence = `SELECT * FROM scheduler;`
-
-	CreateIdIndex   = `CREATE INDEX scheduler_id_IDX ON scheduler (id);`
-	CreateDateIndex = `CREATE INDEX scheduler_date_IDX ON scheduler (date);`
-
-	authenticationRequired = "Authentication required"
-	IncorrectRequest       = "Не корректный запрос"
-)
-
 // Структура для задач
 type Task struct {
 	Id      string `json:"id,omitempty"`
