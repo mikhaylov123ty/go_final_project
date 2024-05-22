@@ -11,6 +11,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// Определение констант для запросов создания таблицы и индексов
 const (
 	createTableQuery = `CREATE TABLE scheduler (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

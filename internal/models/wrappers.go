@@ -11,7 +11,7 @@ import (
 	"finalProject/internal/tasks"
 )
 
-// Константы для создания таблицы и индексов
+// Определение константы для вывода ошибки аутентификации
 const (
 	authenticationRequired = "Authentication required"
 )
