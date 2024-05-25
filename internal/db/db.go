@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"finalProject/internal/logger"
 	"finalProject/internal/models"
 
 	_ "modernc.org/sqlite"
@@ -36,7 +37,7 @@ var DbInstance *dbInstance
 // Метод инициализации файла БД
 // file - путь к файлу с БД
 func Init(file string) (*dbInstance, error) {
-	log.Println("Initializing database")
+	logger.Slog.JsonInfo.Println("Initializing database")
 
 	// Открываем\создаем файл с базой данных
 	db, err := sql.Open("sqlite", file)
@@ -46,7 +47,7 @@ func Init(file string) (*dbInstance, error) {
 
 	// Проверка наличия таблицы в БД, создание таблицы и индексов в случае отсутствия
 	if checkDbTable(db) {
-		log.Println("Table scheduler not found, creating")
+		logger.Slog.JsonWarn.Println("Table scheduler not found, creating")
 		_, err := db.Exec(createTableQuery)
 		if err != nil {
 			return nil, err
@@ -71,7 +72,7 @@ func Init(file string) (*dbInstance, error) {
 
 	// Логирование пути файла с БД
 	exec, _ := os.Executable()
-	log.Println("Database initialized, path:", exec+"/"+file)
+	logger.Slog.JsonInfo.Printf("Database initialized, path: %s/%s", exec, file)
 
 	// Передача инстанса в общую переменную
 	DbInstance = &dbInstance{Connection: db}

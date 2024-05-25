@@ -34,7 +34,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(handlers.DeleteTaskById(r))
 
 	// Запрос GET по id задачи
-	case r.Method == "GET" && r.URL.Query().Has("id") == true:
+	case r.Method == "GET":
 		w.Write(handlers.GetTaskById(r))
 
 	// По умолчанию возвращает статус с ошибкой
