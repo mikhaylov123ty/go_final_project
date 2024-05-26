@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"time"
 
@@ -36,7 +37,8 @@ var DbInstance *dbInstance
 // Метод инициализации файла БД
 // file - путь к файлу с БД
 func Init(file string) (*dbInstance, error) {
-	logger.Slog.JsonInfo.Println("Initializing database")
+
+	logger.Slog.Json.Info("Initializing database")
 
 	// Открываем\создаем файл с базой данных
 	db, err := sql.Open("sqlite", file)
@@ -46,7 +48,7 @@ func Init(file string) (*dbInstance, error) {
 
 	// Проверка наличия таблицы в БД, создание таблицы и индексов в случае отсутствия
 	if checkDbTable(db) {
-		logger.Slog.JsonWarn.Println("Table scheduler not found, creating")
+		logger.Slog.Json.Warn("Table scheduler not found, creating")
 		_, err = db.Exec(createTableQuery)
 		if err != nil {
 			return nil, err
@@ -71,7 +73,7 @@ func Init(file string) (*dbInstance, error) {
 
 	// Логирование пути файла с БД
 	exec, _ := os.Executable()
-	logger.Slog.JsonInfo.Printf("Database initialized, path: %s/%s", exec, file)
+	logger.Slog.Json.Info(fmt.Sprintf("Database initialized, path: %s/%s", exec, file))
 
 	// Передача инстанса в общую переменную
 	DbInstance = &dbInstance{Connection: db}
@@ -90,7 +92,7 @@ func checkDbTable(db *sql.DB) bool {
 	// Закрыть строки после проверки
 	defer rows.Close()
 	if err != nil {
-		logger.Slog.JsonError.Println(err.Error())
+		logger.Slog.Json.Error(err.Error())
 		return false
 	}
 

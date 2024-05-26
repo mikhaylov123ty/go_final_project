@@ -103,13 +103,13 @@ func NextDate(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	now, err := time.Parse("20060102", values.Get("now"))
 	if err != nil {
-		logger.Slog.JsonError.Println(err.Error())
+		logger.Slog.Json.Error(err.Error())
 		return
 	}
 
 	res, err := tasks.NextDateHandler(now, values.Get("date"), values.Get("repeat"))
 	if err != nil {
-		logger.Slog.JsonError.Println(err.Error())
+		logger.Slog.Json.Error(err.Error())
 		return
 	}
 	w.Write([]byte(res))

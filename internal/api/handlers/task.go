@@ -19,7 +19,7 @@ func AddTask(r *http.Request) []byte {
 	// Проверка вводных данных задачи
 	response := newTask.CheckTask(r)
 	if response.Error != "" {
-		logger.Slog.JsonError.Println(response.Error)
+		logger.Slog.Json.Error(response.Error)
 		return response.Marshal()
 	}
 
@@ -40,7 +40,7 @@ func ChangeTask(r *http.Request) []byte {
 	// Проверка вводных данных задачи
 	response := modifiedTask.CheckTask(r)
 	if response.Error != "" {
-		logger.Slog.JsonError.Println(response.Error)
+		logger.Slog.Json.Error(response.Error)
 		return response.Marshal()
 	}
 

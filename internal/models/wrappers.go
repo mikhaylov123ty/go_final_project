@@ -20,7 +20,7 @@ const (
 func (r *Response) Marshal() []byte {
 	res, err := json.Marshal(r)
 	if err != nil {
-		logger.Slog.JsonError.Println("Error marshalling response:", err)
+		logger.Slog.Json.Error("Error marshalling response:", err)
 	}
 
 	return res
@@ -29,14 +29,14 @@ func (r *Response) Marshal() []byte {
 // Метод для логирования ошибки и сериализации ответа
 func (r *Response) LogResponseError(s string) []byte {
 	r.Error = s
-	logger.Slog.JsonError.Println(r.Error)
+	logger.Slog.Json.Error(r.Error)
 
 	return r.Marshal()
 }
 
 // Метод для логирования ошибок авторизации
 func LogAuthError(s string, e error, w http.ResponseWriter) {
-	logger.Slog.JsonError.Println(s, e.Error())
+	logger.Slog.Json.Error(s, e.Error())
 	http.Error(w, authenticationRequired, http.StatusUnauthorized)
 }
 

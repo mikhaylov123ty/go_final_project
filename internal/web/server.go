@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 
 	"finalProject/internal/api"
@@ -22,8 +23,8 @@ func Init(port string) *server {
 
 // Запуск веб-сервера
 func (s *server) Start(webDir string) error {
-	logger.Slog.JsonInfo.Println("Starting server...")
-	logger.Slog.JsonInfo.Printf("Server: http://localhost:%s/", s.port)
+	logger.Slog.Json.Info("Starting server...")
+	logger.Slog.Json.Info(fmt.Sprintf("Server: http://localhost:%s/", s.port))
 
 	// Обработчик файлового сервера
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
