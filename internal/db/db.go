@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"log"
 	"os"
 	"time"
 
@@ -48,7 +47,7 @@ func Init(file string) (*dbInstance, error) {
 	// Проверка наличия таблицы в БД, создание таблицы и индексов в случае отсутствия
 	if checkDbTable(db) {
 		logger.Slog.JsonWarn.Println("Table scheduler not found, creating")
-		_, err := db.Exec(createTableQuery)
+		_, err = db.Exec(createTableQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +90,7 @@ func checkDbTable(db *sql.DB) bool {
 	// Закрыть строки после проверки
 	defer rows.Close()
 	if err != nil {
-		log.Println(err)
+		logger.Slog.JsonError.Println(err.Error())
 		return false
 	}
 

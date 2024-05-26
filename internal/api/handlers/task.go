@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
 	"finalProject/internal/db"
+	"finalProject/internal/logger"
 	"finalProject/internal/models"
 	"finalProject/internal/tasks"
 )
@@ -19,7 +19,7 @@ func AddTask(r *http.Request) []byte {
 	// Проверка вводных данных задачи
 	response := newTask.CheckTask(r)
 	if response.Error != "" {
-		log.Println(response.Error)
+		logger.Slog.JsonError.Println(response.Error)
 		return response.Marshal()
 	}
 
@@ -40,7 +40,7 @@ func ChangeTask(r *http.Request) []byte {
 	// Проверка вводных данных задачи
 	response := modifiedTask.CheckTask(r)
 	if response.Error != "" {
-		log.Println(response.Error)
+		logger.Slog.JsonError.Println(response.Error)
 		return response.Marshal()
 	}
 

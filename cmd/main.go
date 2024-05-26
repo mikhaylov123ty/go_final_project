@@ -13,6 +13,7 @@ func main() {
 	var port string
 	var dbFile string
 
+	// Инициализация логгера Slog
 	logger.Init()
 
 	// Предопределение, если переменные окружения пустые
@@ -39,7 +40,6 @@ func main() {
 		port = "7540"
 	}
 
-	logger.Slog.JsonInfo.Println("Server Started")
 	// Инициализация веб-сервера
 	server := web.Init(port)
 	err = server.Start("web")
