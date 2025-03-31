@@ -1,0 +1,6 @@
+tests
+.idea
+.gitignore
+.dockerignore
+README.md
+scheduler.db
